@@ -26,6 +26,10 @@ public:
 
 	Color4f get_pixel( const int x, const int y, const float t = 0.0f ) override;
 
+	Color4f phongShader(const int x, const int y, const float t);
+
+	Color4f phongShader(RTCRayHit rtcRayHit, float t, int depth);
+
 	int Ui();
 
 private:

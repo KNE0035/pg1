@@ -103,10 +103,7 @@ void Raytracer::LoadScene( const std::string file_name )
 	rtcCommitScene( scene_ );
 }
 
-Color4f Raytracer::get_pixel(const int x, const int y, const float t)
-{
-	// TODO generate primary ray and perform ray cast on the scene
-	// setup a hit
+Color4f Raytracer::phongShader(const int x, const int y, const float t = 0.0f) {
 	RTCHit hit;
 	hit.geomID = RTC_INVALID_GEOMETRY_ID;
 	hit.primID = RTC_INVALID_GEOMETRY_ID;
@@ -120,29 +117,62 @@ Color4f Raytracer::get_pixel(const int x, const int y, const float t)
 	ray_hit.ray = camera_.GenerateRay(x + 0.5, y + 0.5);
 	ray_hit.hit = hit;
 
-	// intersect ray with the scene
+	return phongShader(ray_hit, t, 0);
+}
+
+Color4f Raytracer::phongShader(RTCRayHit rtcRayHit, float t, int depth) {
+	float ambientCoef = 0.1;
+	float difuseCoef = 0.1;
+	float speculatCoef = 0.1;
+	
+	Vector3 lightPossition = Vector3{ 1 ,1 ,1 };
+
 	RTCIntersectContext context;
 	rtcInitIntersectContext(&context);
-	rtcIntersect1(scene_, &context, &ray_hit);
+	rtcIntersect1(scene_, &context, &rtcRayHit);
 
-	if (ray_hit.hit.geomID != RTC_INVALID_GEOMETRY_ID)
+	if (rtcRayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID)
 	{
 		// we hit something
-		RTCGeometry geometry = rtcGetGeometry(scene_, ray_hit.hit.geomID);
-		Normal3f normal;
+		RTCGeometry geometry = rtcGetGeometry(scene_, rtcRayHit.hit.geomID);
+		Vector3 normal;
+		Vector3 viewVector = { rtcRayHit.ray.dir_x, rtcRayHit.ray.dir_y, rtcRayHit.ray.dir_z };
 		// get interpolated normal
-		rtcInterpolate0(geometry, ray_hit.hit.primID, ray_hit.hit.u, ray_hit.hit.v,
+		rtcInterpolate0(geometry, rtcRayHit.hit.primID, rtcRayHit.hit.u, rtcRayHit.hit.v,
 			RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, 0, &normal.x, 3);
+
+
+		if (viewVector.DotProduct(normal) > 0) {
+			normal *= -1;
+		}
+
+		Vector3 normalVector = { normal.x, normal.y, normal.z };
+
 		// and texture coordinates
 		Coord2f tex_coord;
-		rtcInterpolate0(geometry, ray_hit.hit.primID, ray_hit.hit.u, ray_hit.hit.v,
+		rtcInterpolate0(geometry, rtcRayHit.hit.primID, rtcRayHit.hit.u, rtcRayHit.hit.v,
 			RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, 1, &tex_coord.u, 2);
 		Material * material = (Material *)rtcGetGeometryUserData(geometry);
-		/*printf("normal = (%0.3f, %0.3f, %0.3f)\n", normal.x, normal.y, normal.z);
-		printf("tex_coord = (%0.3f, %0.3f)\n", tex_coord.u, tex_coord.v);*/
-		return Color4f{ material->diffuse.x, material->diffuse.y, material->diffuse.z, 1.0f };
+
+		float normalLigthScalarProduct = normal.DotProduct(lightPossition);
+		
+		Vector3 lr = 2 * (normalLigthScalarProduct)* normal - lightPossition;
+
+		return Color4f{
+					 material->ambient.x + (material->diffuse.x * normalLigthScalarProduct) + (material->emission.x * viewVector.DotProduct(lr)),
+					 material->ambient.y + (material->diffuse.y * normalLigthScalarProduct) + (material->emission.y * viewVector.DotProduct(lr)),
+					 material->ambient.z + (material->diffuse.z * normalLigthScalarProduct) + (material->emission.z * viewVector.DotProduct(lr)),
+					 1};
 	}
-	return Color4f{1.0f, 0.0f, 1.0f, 1.0f};
+	else {
+		return Color4f{ 1 ,0 ,1, 1 };
+	}
+}
+
+Color4f Raytracer::get_pixel(const int x, const int y, const float t)
+{
+	Color4f value = phongShader(x, y, t);
+	return value;
 }
 
 int Raytracer::Ui()
