@@ -113,7 +113,7 @@ Color4f Raytracer::shader(const int x, const int y, const float t = 0.0f) {
 	rtcInitIntersectContext(&context);
 	rtcIntersect1(scene_, &context, &(rtcRayHitWithIor.rtcRayHit));
 
-	Vector3 lightPossition = Vector3{ 600, 600,  300};
+	Vector3 lightPossition = Vector3{ 600, 600, 600};
 
 	if (rtcRayHitWithIor.rtcRayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID)
 	{
@@ -130,9 +130,9 @@ Color4f Raytracer::shader(const int x, const int y, const float t = 0.0f) {
 				float enlighted = castShadowRay(intersectionPoint, vectorToLight, dstToLight, context);
 
 				return Color4f{
-					 enlighted * material->ambient.x + enlighted * ((material->diffuse.x * normalLigthScalarProduct) + (material->emission.x * viewVector.DotProduct(lr))),
-					 enlighted * material->ambient.y + enlighted * ((material->diffuse.y * normalLigthScalarProduct) + (material->emission.y * viewVector.DotProduct(lr))),
-					 enlighted * material->ambient.z + enlighted * ((material->diffuse.z * normalLigthScalarProduct) + (material->emission.z * viewVector.DotProduct(lr))),
+					 material->ambient.x + enlighted * ((material->diffuse.x * normalLigthScalarProduct) + (material->emission.x * viewVector.DotProduct(lr))),
+					 material->ambient.y + enlighted * ((material->diffuse.y * normalLigthScalarProduct) + (material->emission.y * viewVector.DotProduct(lr))),
+					 material->ambient.z + enlighted * ((material->diffuse.z * normalLigthScalarProduct) + (material->emission.z * viewVector.DotProduct(lr))),
 					 1 };
 				break;
 
@@ -151,9 +151,9 @@ Color4f Raytracer::shader(const int x, const int y, const float t = 0.0f) {
 		float enlighteds = castShadowRay(lightPossition, vectorToLight, dstToLight, context);
 
 		return Color4f{
-			 enlighteds * material->ambient.x + enlighteds * ((material->diffuse.x * normalLigthScalarProducts) + (material->emission.x * viewVector.DotProduct(lrs))),
-			 enlighteds * material->ambient.y + enlighteds * ((material->diffuse.y * normalLigthScalarProducts) + (material->emission.y * viewVector.DotProduct(lrs))),
-			 enlighteds * material->ambient.z + enlighteds * ((material->diffuse.z * normalLigthScalarProducts) + (material->emission.z * viewVector.DotProduct(lrs))),
+			 material->ambient.x + enlighteds * ((material->diffuse.x * normalLigthScalarProducts) + (material->emission.x * viewVector.DotProduct(lrs))),
+			 material->ambient.y + enlighteds * ((material->diffuse.y * normalLigthScalarProducts) + (material->emission.y * viewVector.DotProduct(lrs))),
+			 material->ambient.z + enlighteds * ((material->diffuse.z * normalLigthScalarProducts) + (material->emission.z * viewVector.DotProduct(lrs))),
 			 1 };
 	}
 	else {
@@ -298,7 +298,7 @@ float Raytracer::castShadowRay(const Vector3 intersectionPoint, Vector3 vectorTo
 	RTCRay rayFromLightToVector = Raytracer::createRay(intersectionPoint, ((vectorToLight) * -1).Normalize(), dist, 0.5);
 	rtcOccluded1(scene_, &context, &rayFromLightToVector);
 
-	return rayFromLightToVector.tfar < dist ? 0.0 : 1.0;
+	return rayFromLightToVector.tfar != dist ? 0.0 : 1.0;
 }
 
 void Raytracer::getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3* vectorToLight, Vector3* normal, Vector3* viewVector, Vector3* intersectionPoint, Vector3 lightPossition, float* dstToLight, Material* material) {
