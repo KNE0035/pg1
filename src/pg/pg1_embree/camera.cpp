@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "camera.h"
+#include "raytracer.h"
 
 Camera::Camera( const int width, const int height, const float fov_y,
 	const Vector3 view_from, const Vector3 view_at )
@@ -33,24 +34,8 @@ Camera::Camera( const int width, const int height, const float fov_y,
 
 RTCRay Camera::GenerateRay( const float x_i, const float y_i ) const
 {
-	RTCRay ray;
-	ray.org_x = view_from_.x; // ray origin
-	ray.org_y = view_from_.y;
-	ray.org_z = view_from_.z;
-	ray.tnear = FLT_MIN; // start of ray segment
-
 	Vector3 d_c = { x_i - width_ * 0.5f, height_ * 0.5f - y_i, - f_y_  };
 	Vector3 d_w = M_c_w_ * d_c; 
 
-	ray.dir_x = d_w.x; // ray direction
-	ray.dir_y = d_w.y;
-	ray.dir_z = d_w.z;
-	ray.time = 0.0f; // time of this ray for motion blur
-
-	ray.tfar = FLT_MAX; // end of ray segment (set to hit distance)
-
-	ray.mask = 0; // can be used to mask out some geometries for some rays
-	ray.id = 0; // identify a ray inside a callback function
-	ray.flags = 0; // reserved
-	return ray;
+	return Raytracer::createRay(view_from_, d_w);
 }

@@ -24,6 +24,8 @@
 */
 #define IOR_GLASS 1.5f
 
+enum Shader { PHONG_SHADER = 1, GLASS_SHADER = 2, NORMAL_SHADER = 3 };
+
 /*! \class Material
 \brief A simple material.
 
@@ -54,6 +56,7 @@ public:
 	\param textures pole ukazatelù na textury.
 	\param no_textures délka pole \a textures. Maximálnì \a NO_TEXTURES - 1.
 	*/
+
 	Material( std::string & name, const Vector3 & ambient, const Vector3 & diffuse,
 		const Vector3 & specular, const Vector3 & emission, const float reflectivity,
 		const float shininess, const float ior,
@@ -86,6 +89,8 @@ public:
 	*/
 	void set_texture( const int slot, Texture * texture );
 
+	void set_shader(Shader shader);
+
 	//! Vrátí texturu.
 	/*!	
 	\param slot èíslo slotu textury. Maximálnì \a NO_TEXTURES - 1.
@@ -94,6 +99,8 @@ public:
 	Texture * get_texture( const int slot ) const;
 
 public:
+	Shader shader;
+
 	Vector3 ambient; /*!< RGB barva prostøedí \f$\left<0, 1\right>^3\f$. */
 	Vector3 diffuse; /*!< RGB barva rozptylu \f$\left<0, 1\right>^3\f$. */
 	Vector3 specular; /*!< RGB barva odrazu \f$\left<0, 1\right>^3\f$. */

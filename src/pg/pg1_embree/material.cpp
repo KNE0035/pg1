@@ -79,3 +79,7 @@ Texture * Material::get_texture( const int slot ) const
 {
 	return textures_[slot];
 }
+
+void Material::set_shader(Shader shader) {
+	this->shader = shader;
+}

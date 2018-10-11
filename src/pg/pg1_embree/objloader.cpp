@@ -173,6 +173,11 @@ int LoadMTL( const char * file_name, const char * path, std::vector<Material *> 
 					std::string full_name = std::string(path).append(image_file_name);
 					material->set_texture(Material::kOpacityMapSlot, TextureProxy(full_name, already_loaded_textures, -1, true));
 				}
+				if (strstr(tmp, "shader") == tmp) {
+					int shaderValue = 0;
+					sscanf(tmp, "%*s %d", &shaderValue);
+					material->set_shader(Shader(shaderValue));
+				}
 			}
 		}
 

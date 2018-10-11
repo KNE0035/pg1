@@ -1,5 +1,7 @@
 #pragma once
 
+struct RTCRayHitWithIor { RTCRayHit rtcRayHit; float ior; };
+
 struct Vertex3f { float x, y, z; }; // a single vertex position structure matching certain format
 
 using Normal3f = Vertex3f; // a single vertex normal structure matching certain format

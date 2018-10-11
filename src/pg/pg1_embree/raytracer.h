@@ -26,15 +26,22 @@ public:
 
 	Color4f get_pixel( const int x, const int y, const float t = 0.0f ) override;
 
-	Color4f phongShader(const int x, const int y, const float t);
+	Color4f shader(const int x, const int y, const float t);
 
-	Color4f phongShader(RTCRayHit rtcRayHit, float t, int depth);
+	Color4f phongShader(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth);
+
+	float castShadowRay(const Vector3 origin, Vector3 vectorToLight, const float dist, RTCIntersectContext context);
 
 	int Ui();
 
+	static RTCRay createRay(Vector3 origin, Vector3 dir, float tfar = FLT_MAX, float tnear = FLT_MIN);
+	static RTCHit createEmptyHit();
+	Vector3 getInterpolatedPoint(RTCRay ray);
 private:
 	std::vector<Surface *> surfaces_;
-	std::vector<Material *> materials_;
+	std::vector<Material *> materials_; 
+
+	void getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3* vectorToLight, Vector3* normal, Vector3* viewVector, Vector3* intersectionPoint, Vector3 lightPossition, float* dstToLight, Material* material);
 
 	RTCDevice device_;
 	RTCScene scene_;
