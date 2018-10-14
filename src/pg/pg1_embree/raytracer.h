@@ -26,9 +26,9 @@ public:
 
 	Color4f get_pixel( const int x, const int y, const float t = 0.0f ) override;
 
-	Color4f shader(const int x, const int y, const float t);
+	Color4f applyShader(const int x, const int y, const float t);
 
-	Color4f phongShader(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth);
+	
 
 	float castShadowRay(const Vector3 origin, Vector3 vectorToLight, const float dist, RTCIntersectContext context);
 
@@ -40,6 +40,8 @@ public:
 private:
 	std::vector<Surface *> surfaces_;
 	std::vector<Material *> materials_; 
+	
+	Color4f applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth);
 
 	void getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3* vectorToLight, Vector3* normal, Vector3* viewVector, Vector3* intersectionPoint, Vector3 lightPossition, float* dstToLight, Material* material);
 

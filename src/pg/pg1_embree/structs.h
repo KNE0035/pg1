@@ -13,6 +13,11 @@ struct Triangle3ui { unsigned int v0, v1, v2; }; // indicies of a single triangl
 struct RTC_ALIGN( 16 ) Color4f
 {
 	struct { float r, g, b, a; }; // a = 1 means that the pixel is opaque
+
+	Color4f operator+(const Color4f & v)
+	{
+		return Color4f{ this->r + v.r, this->g + v.g, this->b + v.b, this->a };
+	}
 };
 
 struct Color3f { float r, g, b; };
