@@ -146,6 +146,9 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 				break;
 			}
 			case GLASS_SHADER:
+				float normalLigthScalarProduct = normal.DotProduct(vectorToLight);
+				Vector3 lr = 2 * (normalLigthScalarProduct)* normal - vectorToLight;
+				
 				Vector3 dirTowardsObs = -viewVector, dirOfTransmittedRay, dirOfReflectedRay;
 				float ior1, ior2;
 				float angle1 = normal.DotProduct(dirTowardsObs), angle2 = 0;
@@ -157,7 +160,9 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 				if (angle1 > 0) {
 					angle2 = sqrt(1 - sqr(ior1 / ior2) * (1 - sqr(angle1)));
 					dirOfTransmittedRay = (ior1 / ior2) * viewVector + ((ior1 / ior2) * angle1 - angle2) * normal;
-				
+					float enlighted = castShadowRay(intersectionPoint, vectorToLight, dstToLight, context);
+
+
 					dirOfReflectedRay = (2 * (normal.DotProduct(dirTowardsObs))) * normal - dirTowardsObs;
 
 					Rs = sqr((ior2 * angle2 - ior1 * angle1) / (ior2 * angle2 + ior1 * angle1));
@@ -175,10 +180,23 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 					reflectedRayHitWithIor.rtcRayHit.ray = Raytracer::createRay(intersectionPoint, dirOfReflectedRay, FLT_MAX, 0.1f);
 					reflectedRayHitWithIor.rtcRayHit.hit = Raytracer::createEmptyHit();
 					reflectedRayHitWithIor.ior = ior2;
+					resultColor = resultColor + Color4f{
+					(material->ambient.x + enlighted* ((material->diffuse.x * normalLigthScalarProduct) + (material->emission.x * viewVector.DotProduct(lr)))),
+					(material->ambient.y + enlighted* ((material->diffuse.y * normalLigthScalarProduct) + (material->emission.y * viewVector.DotProduct(lr)))),
+					(material->ambient.z + enlighted* ((material->diffuse.z * normalLigthScalarProduct) + (material->emission.z * viewVector.DotProduct(lr)))),
+					1.0 };
+
+					Vector3 vectorToIntersection = (intersectionPoint - Vector3{ rtcRayHitWithIor.rtcRayHit.ray.org_x, rtcRayHitWithIor.rtcRayHit.ray.org_y, rtcRayHitWithIor.rtcRayHit.ray.org_z });
+					float dstToIntersection = vectorToIntersection.L2Norm();
+
+					T = exp(40-dstToIntersection);
+
 
 					depth++;
 					resultColor = resultColor + applyShaderInternal(transmittedRayHitWithIor, t, depth) * R;
 					resultColor = resultColor + applyShaderInternal(reflectedRayHitWithIor, t, depth) * T;
+
+
 				}
 				else {
 					return Color4f{ 0,0,0,1 };
@@ -188,8 +206,7 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 	else {
 		return Color4f{ 1,1,1,1 };
 	}
-	float normalizeFactor = depth == 0 ? 1 : 1 / double(depth * 2);
-	return Color4f{ resultColor.r * normalizeFactor, resultColor.g * normalizeFactor, resultColor.b* normalizeFactor,1 };
+	return Color4f{ resultColor.r , resultColor.g , resultColor.b, 10 };
 }
 Color4f Raytracer::get_pixel(const int x, const int y, const float t)
 {
