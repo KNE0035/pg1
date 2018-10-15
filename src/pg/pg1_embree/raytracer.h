@@ -36,6 +36,7 @@ public:
 
 	static RTCRay createRay(Vector3 origin, Vector3 dir, float tfar = FLT_MAX, float tnear = FLT_MIN);
 	static RTCHit createEmptyHit();
+
 	Vector3 getInterpolatedPoint(RTCRay ray);
 private:
 	std::vector<Surface *> surfaces_;

@@ -2,7 +2,7 @@
 #include "raytracer.h"
 #include "objloader.h"
 #include "tutorials.h"
-#include <algorithm>  
+#include "mymath.h" 
 
 Raytracer::Raytracer( const int width, const int height,
 	const float fov_y, const Vector3 view_from, const Vector3 view_at,
@@ -107,21 +107,23 @@ void Raytracer::LoadScene( const std::string file_name )
 Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 	RTCRayHitWithIor rtcRayHitWithIor;
 
-	rtcRayHitWithIor.rtcRayHit.ray = camera_.GenerateRay(x + 0.5, y + 0.5);
+	rtcRayHitWithIor.rtcRayHit.ray = camera_.GenerateRay(x + 0.5f, y + 0.5f);
 	rtcRayHitWithIor.rtcRayHit.hit = Raytracer::createEmptyHit();
-	
+	rtcRayHitWithIor.ior = IOR_AIR;
+
 	return applyShaderInternal(rtcRayHitWithIor, t, 0);
 }
 
 Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth)
 {
-	if(depth > 10) return Color4f{ 0,0,0,1 };
+	if(depth > 10) return Color4f{ 1,1,1,1 };
 
 	RTCIntersectContext context;
 	rtcInitIntersectContext(&context);
 	rtcIntersect1(scene_, &context, &(rtcRayHitWithIor.rtcRayHit));
 
 	Vector3 lightPossition = Vector3{ 600, 600, 600 };
+	Color4f resultColor = Color4f{ 0, 0, 0, 1};
 	if (rtcRayHitWithIor.rtcRayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID)
 	{
 		Vector3 vectorToLight, normal, viewVector, intersectionPoint;
@@ -131,54 +133,63 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 		getIntersectionInfo(rtcRayHitWithIor, &vectorToLight, &normal, &viewVector, &intersectionPoint, lightPossition, &dstToLight, material);
 
 		switch (material->shader) {
-		case PHONG_SHADER: {
-			float normalLigthScalarProduct = normal.DotProduct(vectorToLight);
-			Vector3 lr = 2 * (normalLigthScalarProduct)* normal - vectorToLight;
-			float enlighted = castShadowRay(intersectionPoint, vectorToLight, dstToLight, context);
+			case PHONG_SHADER: {
+				float normalLigthScalarProduct = normal.DotProduct(vectorToLight);
+				Vector3 lr = 2 * (normalLigthScalarProduct)* normal - vectorToLight;
+				float enlighted = castShadowRay(intersectionPoint, vectorToLight, dstToLight, context);
 
-			RTCRayHitWithIor rayHitWithIor;
+				resultColor = Color4f{
+					(material->ambient.x + enlighted * ((material->diffuse.x * normalLigthScalarProduct) + (material->emission.x * viewVector.DotProduct(lr)))),
+					(material->ambient.y + enlighted * ((material->diffuse.y * normalLigthScalarProduct) + (material->emission.y * viewVector.DotProduct(lr)))),
+					(material->ambient.z + enlighted * ((material->diffuse.z * normalLigthScalarProduct) + (material->emission.z * viewVector.DotProduct(lr)))),
+					1 };
+				break;
+			}
+			case GLASS_SHADER:
+				Vector3 dirTowardsObs = -viewVector, dirOfTransmittedRay, dirOfReflectedRay;
+				float ior1, ior2;
+				float angle1 = normal.DotProduct(dirTowardsObs), angle2 = 0;
+				float Rs, Rp, R, T;
 
-			rayHitWithIor.rtcRayHit.ray = Raytracer::createRay(intersectionPoint, lr);
-			rayHitWithIor.rtcRayHit.hit = Raytracer::createEmptyHit();
-
-			Color4f test = applyShaderInternal(rayHitWithIor, t, ++depth);
-
-			return Color4f{ 
-				test.r  + (material->ambient.x + enlighted * ((material->diffuse.x * normalLigthScalarProduct) + (material->emission.x * viewVector.DotProduct(lr)))),
-				test.g  + (material->ambient.y + enlighted * ((material->diffuse.y * normalLigthScalarProduct) + (material->emission.y * viewVector.DotProduct(lr)))),
-				test.b  + (material->ambient.z + enlighted * ((material->diffuse.z * normalLigthScalarProduct) + (material->emission.z * viewVector.DotProduct(lr)))),
-				1 };
-
-			break;
-		}
-		case NORMAL_SHADER:
-			return Color4f{
-				1,1,1,1
-			};
-
-		case GLASS_SHADER:
-			/*
-			if (depth < 1) {
-				RTCRayHitWithIor rayHitWithIor;
-
-				rayHitWithIor.rtcRayHit.ray = Raytracer::createRay(intersectionPoint, lr);
-				rayHitWithIor.rtcRayHit.hit = Raytracer::createEmptyHit();
-
-				return hitColor + applyShaderInternal(rayHitWithIor, t, ++depth, hitColor);
-			} 
-			*/
+				ior1 = rtcRayHitWithIor.ior;
 			
-			return Color4f{
-				1,0,0,1
-			};
-		}
+				ior2 = rtcRayHitWithIor.ior != material->ior ? material->ior : IOR_AIR;
+				if (angle1 > 0) {
+					angle2 = sqrt(1 - sqr(ior1 / ior2) * (1 - sqr(angle1)));
+					dirOfTransmittedRay = (ior1 / ior2) * viewVector + ((ior1 / ior2) * angle1 - angle2) * normal;
+				
+					dirOfReflectedRay = (2 * (normal.DotProduct(dirTowardsObs))) * normal - dirTowardsObs;
+
+					Rs = sqr((ior2 * angle2 - ior1 * angle1) / (ior2 * angle2 + ior1 * angle1));
+					Rp = sqr((ior2 * angle1 - ior1 * angle2) / (ior2 * angle1 + ior1 * angle2));
+					R = (Rs + Rp) * 0.5f;
+
+					T = 1 - R;
+
+					RTCRayHitWithIor transmittedRayHitWithIor, reflectedRayHitWithIor;
+
+					transmittedRayHitWithIor.rtcRayHit.ray = Raytracer::createRay(intersectionPoint, dirOfTransmittedRay, FLT_MAX, 0.1f);
+					transmittedRayHitWithIor.rtcRayHit.hit = Raytracer::createEmptyHit();
+					transmittedRayHitWithIor.ior = ior2;
+
+					reflectedRayHitWithIor.rtcRayHit.ray = Raytracer::createRay(intersectionPoint, dirOfReflectedRay, FLT_MAX, 0.1f);
+					reflectedRayHitWithIor.rtcRayHit.hit = Raytracer::createEmptyHit();
+					reflectedRayHitWithIor.ior = ior2;
+
+					depth++;
+					resultColor = resultColor + applyShaderInternal(transmittedRayHitWithIor, t, depth) * R;
+					resultColor = resultColor + applyShaderInternal(reflectedRayHitWithIor, t, depth) * T;
+				}
+				else {
+					return Color4f{ 0,0,0,1 };
+				}
+			}
 	}
 	else {
-		if (depth == 0) {
-			return Color4f{ 1,0,1,1 };
-		}
-		return Color4f{ 0,0,0,1 };
+		return Color4f{ 1,1,1,1 };
 	}
+	float normalizeFactor = depth == 0 ? 1 : 1 / double(depth * 2);
+	return Color4f{ resultColor.r * normalizeFactor, resultColor.g * normalizeFactor, resultColor.b* normalizeFactor,1 };
 }
 Color4f Raytracer::get_pixel(const int x, const int y, const float t)
 {
@@ -265,9 +276,9 @@ Vector3 Raytracer::getInterpolatedPoint(RTCRay ray) {
 }
 
 float Raytracer::castShadowRay(const Vector3 intersectionPoint, Vector3 vectorToLight, const float dist, RTCIntersectContext context) {
-	RTCRay rayFromIntersectPointToLight = Raytracer::createRay(intersectionPoint, vectorToLight, dist, 0.1);
+	RTCRay rayFromIntersectPointToLight = Raytracer::createRay(intersectionPoint, vectorToLight, dist, 0.1f);
 	rtcOccluded1(scene_, &context, &rayFromIntersectPointToLight);
-	return rayFromIntersectPointToLight.tfar < dist ? 0.0 : 1.0;
+	return rayFromIntersectPointToLight.tfar < dist ? 0.0f : 1.0f;
 }
 
 void Raytracer::getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3* vectorToLight, Vector3* normal, Vector3* viewVector, Vector3* intersectionPoint, Vector3 lightPossition, float* dstToLight, Material* material) {

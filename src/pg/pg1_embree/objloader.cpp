@@ -178,6 +178,11 @@ int LoadMTL( const char * file_name, const char * path, std::vector<Material *> 
 					sscanf(tmp, "%*s %d", &shaderValue);
 					material->set_shader(Shader(shaderValue));
 				}
+				if (strstr(tmp, "ior") == tmp) {
+					float ior = 0;
+					sscanf(tmp, "%*s %f", &ior);
+					material->ior = ior;
+				}
 			}
 		}
 
