@@ -156,7 +156,7 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 
 				ior1 = rtcRayHitWithIor.ior;
 			
-				ior2 = rtcRayHitWithIor.ior != material->ior ? material->ior : IOR_AIR;
+				ior2 = ior1 != material->ior ? material->ior : IOR_AIR;
 				if (angle1 > 0) {
 					angle2 = sqrt(1 - sqr(ior1 / ior2) * (1 - sqr(angle1)));
 					dirOfTransmittedRay = (ior1 / ior2) * viewVector + ((ior1 / ior2) * angle1 - angle2) * normal;
@@ -180,21 +180,25 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 					reflectedRayHitWithIor.rtcRayHit.ray = Raytracer::createRay(intersectionPoint, dirOfReflectedRay, FLT_MAX, 0.1f);
 					reflectedRayHitWithIor.rtcRayHit.hit = Raytracer::createEmptyHit();
 					reflectedRayHitWithIor.ior = ior2;
+
 					resultColor = resultColor + Color4f{
 					(material->ambient.x + enlighted* ((material->diffuse.x * normalLigthScalarProduct) + (material->emission.x * viewVector.DotProduct(lr)))),
 					(material->ambient.y + enlighted* ((material->diffuse.y * normalLigthScalarProduct) + (material->emission.y * viewVector.DotProduct(lr)))),
 					(material->ambient.z + enlighted* ((material->diffuse.z * normalLigthScalarProduct) + (material->emission.z * viewVector.DotProduct(lr)))),
 					1.0 };
 
-					Vector3 vectorToIntersection = (intersectionPoint - Vector3{ rtcRayHitWithIor.rtcRayHit.ray.org_x, rtcRayHitWithIor.rtcRayHit.ray.org_y, rtcRayHitWithIor.rtcRayHit.ray.org_z });
-					float dstToIntersection = vectorToIntersection.L2Norm();
-
-					T = exp(40-dstToIntersection);
+					float T1 = 1;
+					if (ior2 != IOR_AIR) {
+						Vector3 vectorToIntersection = (intersectionPoint - Vector3{ rtcRayHitWithIor.rtcRayHit.ray.org_x, rtcRayHitWithIor.rtcRayHit.ray.org_y, rtcRayHitWithIor.rtcRayHit.ray.org_z });
+						float dstToIntersection = vectorToIntersection.L2Norm();
+						T1 = exp(-0.0000001*dstToIntersection);
+					}
+					
 
 
 					depth++;
-					resultColor = resultColor + applyShaderInternal(transmittedRayHitWithIor, t, depth) * R;
-					resultColor = resultColor + applyShaderInternal(reflectedRayHitWithIor, t, depth) * T;
+					resultColor = resultColor + applyShaderInternal(transmittedRayHitWithIor, t, depth) * R * T1;
+					resultColor = resultColor + applyShaderInternal(reflectedRayHitWithIor, t, depth)  * T * T1;
 
 
 				}
@@ -204,6 +208,9 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 			}
 	}
 	else {
+		if (depth > 0) {
+			return Color4f{ 0,0,0,1 };
+		}
 		return Color4f{ 1,1,1,1 };
 	}
 	return Color4f{ resultColor.r , resultColor.g , resultColor.b, 10 };
