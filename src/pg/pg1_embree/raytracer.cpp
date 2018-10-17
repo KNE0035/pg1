@@ -122,7 +122,7 @@ Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth)
 {
 	Vector3 viewVector = Vector3{ rtcRayHitWithIor.rtcRayHit.ray.dir_x, rtcRayHitWithIor.rtcRayHit.ray.dir_y, rtcRayHitWithIor.rtcRayHit.ray.dir_z };
-	if(depth > 2) return sphericalMap->getTexel(viewVector);
+	if(depth > 10) return sphericalMap->getTexel(viewVector);
 
 	RTCIntersectContext context;
 	rtcInitIntersectContext(&context);
@@ -162,6 +162,9 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 				ior2 = ior1 != material->ior ? material->ior : IOR_AIR;
 				if (acosf(cosAngle1) > 0) {
 					//something went wrong
+					float test1 = 1 - sqr(cosAngle1);
+					float test2 = sqr(ior1 / ior2);
+					float test3 = 1 - sqr(ior1 / ior2) * (1 - sqr(cosAngle1));
 					cosAngle2 = sqrt(1 - sqr(ior1 / ior2) * (1 - sqr(cosAngle1)));
 					dirOfTransmittedRay = (ior1 / ior2) * viewVector + ((ior1 / ior2) * cosAngle1 - cosAngle2) * normal;
 					float enlighted = castShadowRay(intersectionPoint, vectorToLight, dstToLight, context);
