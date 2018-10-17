@@ -108,9 +108,9 @@ void Raytracer::LoadScene( const std::string file_name )
 Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 	RTCRayHitWithIor rtcRayHitWithIor;
 
-	if ((x == 306) && (y == 91)) {
+	/*if ((x == 306) && (y == 91)) {
 		printf("test");
-	}
+	}*/
 
 	rtcRayHitWithIor.rtcRayHit.ray = camera_.GenerateRay(x + 0.5f, y + 0.5f);
 	rtcRayHitWithIor.rtcRayHit.hit = Raytracer::createEmptyHit();
@@ -122,21 +122,21 @@ Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth)
 {
 	Vector3 viewVector = Vector3{ rtcRayHitWithIor.rtcRayHit.ray.dir_x, rtcRayHitWithIor.rtcRayHit.ray.dir_y, rtcRayHitWithIor.rtcRayHit.ray.dir_z };
-	if(depth > 10) return sphericalMap->getTexel(viewVector);
+	if(depth > 5) return sphericalMap->getTexel(viewVector);
 
 	RTCIntersectContext context;
 	rtcInitIntersectContext(&context);
 	rtcIntersect1(scene_, &context, &(rtcRayHitWithIor.rtcRayHit));
 
-	Vector3 lightPossition = Vector3{ 0, 0, 4 };
+	Vector3 lightPossition = Vector3{ 1000, 1000, 1000 };
 	Color4f resultColor = Color4f{ 0, 0, 0, 1};
 	if (rtcRayHitWithIor.rtcRayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID)
 	{
 		Vector3 vectorToLight, normal, intersectionPoint;
 		float dstToLight;
-		Material* material = new Material();
+		Material* material = NULL;
 
-		getIntersectionInfo(rtcRayHitWithIor, &vectorToLight, &normal, viewVector, &intersectionPoint, lightPossition, &dstToLight, material);
+		getIntersectionInfo(rtcRayHitWithIor, &vectorToLight, &normal, viewVector, &intersectionPoint, lightPossition, &dstToLight, &material);
 
 		switch (material->shader) {
 			case PHONG_SHADER: {
@@ -145,9 +145,9 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 				float enlighted = castShadowRay(intersectionPoint, vectorToLight, dstToLight, context);
 
 				resultColor = Color4f{
-					(material->ambient.x + enlighted * ((material->diffuse.x * normalLigthScalarProduct) + (material->emission.x * viewVector.DotProduct(lr)))),
-					(material->ambient.y + enlighted * ((material->diffuse.y * normalLigthScalarProduct) + (material->emission.y * viewVector.DotProduct(lr)))),
-					(material->ambient.z + enlighted * ((material->diffuse.z * normalLigthScalarProduct) + (material->emission.z * viewVector.DotProduct(lr)))),
+					(material->ambient.x + enlighted * ((material->diffuse.x * normalLigthScalarProduct) + pow(material->specular.x * viewVector.DotProduct(lr),material->shininess))),
+					(material->ambient.y + enlighted * ((material->diffuse.y * normalLigthScalarProduct) + pow(material->specular.y * viewVector.DotProduct(lr),material->shininess))),
+					(material->ambient.z + enlighted * ((material->diffuse.z * normalLigthScalarProduct) + pow(material->specular.z * viewVector.DotProduct(lr),material->shininess))),
 					1 };
 				break;
 			}
@@ -160,15 +160,11 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 				ior1 = rtcRayHitWithIor.ior;
 			
 				ior2 = ior1 != material->ior ? material->ior : IOR_AIR;
-				if (acosf(cosAngle1) > 0) {
-					//something went wrong
-					float test1 = 1 - sqr(cosAngle1);
-					float test2 = sqr(ior1 / ior2);
-					float test3 = 1 - sqr(ior1 / ior2) * (1 - sqr(cosAngle1));
-					cosAngle2 = sqrt(1 - sqr(ior1 / ior2) * (1 - sqr(cosAngle1)));
-					dirOfTransmittedRay = (ior1 / ior2) * viewVector + ((ior1 / ior2) * cosAngle1 - cosAngle2) * normal;
-					float enlighted = castShadowRay(intersectionPoint, vectorToLight, dstToLight, context);
 
+				float sqrCos2 = 1 - sqr(ior1 / ior2) * (1 - sqr(cosAngle1));
+				if (acosf(cosAngle1) > 0 && sqrCos2 > 0) {
+					cosAngle2 = sqrt(sqrCos2);
+					dirOfTransmittedRay = (ior1 / ior2) * viewVector + ((ior1 / ior2) * cosAngle1 - cosAngle2) * normal;
 
 					dirOfReflectedRay = (2 * (normal.DotProduct(dirTowardsObs))) * normal - dirTowardsObs;
 
@@ -188,7 +184,7 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 					reflectedRayHitWithIor.rtcRayHit.hit = Raytracer::createEmptyHit();
 					reflectedRayHitWithIor.ior = ior2;
 
-					resultColor = resultColor;
+					resultColor = Color4f{ resultColor.r * material->specular.x, resultColor.g * material->specular.y ,resultColor.b * material->specular.z, 1};
 
 					float T1 = 1;
 					/*if (ior2 != IOR_AIR) {
@@ -203,18 +199,12 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 
 
 				}
-				else {
-					return Color4f{ 0,0,0,1 };
-				}
 			}
 	}
 	else {
 		return sphericalMap->getTexel(viewVector);
 	}
-	if (std::isnan(resultColor.r)) {
-		printf("test");
-	}
-	return Color4f{ resultColor.r , resultColor.g , resultColor.b, 1 };
+	return resultColor;
 }
 Color4f Raytracer::get_pixel(const int x, const int y, const float t)
 {
@@ -306,7 +296,7 @@ float Raytracer::castShadowRay(const Vector3 intersectionPoint, Vector3 vectorTo
 	return rayFromIntersectPointToLight.tfar < dist ? 0.0f : 1.0f;
 }
 
-void Raytracer::getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3* vectorToLight, Vector3* normal, Vector3 viewVector, Vector3* intersectionPoint, Vector3 lightPossition, float* dstToLight, Material* material) {
+void Raytracer::getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3* vectorToLight, Vector3* normal, Vector3 viewVector, Vector3* intersectionPoint, Vector3 lightPossition, float* dstToLight, Material** material) {
 	*intersectionPoint = Raytracer::getInterpolatedPoint(rtcRayHitWithIor.rtcRayHit.ray);
 
 	*vectorToLight = (lightPossition - (*intersectionPoint));
@@ -318,7 +308,7 @@ void Raytracer::getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3* 
 	rtcInterpolate0(geometry, rtcRayHitWithIor.rtcRayHit.hit.primID, rtcRayHitWithIor.rtcRayHit.hit.u, rtcRayHitWithIor.rtcRayHit.hit.v,
 		RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, 0, &(normal->x), 3);
 
-	*material = *((Material *)rtcGetGeometryUserData(geometry));
+	*material = ((Material *)rtcGetGeometryUserData(geometry));
 
 	if (viewVector.DotProduct(*normal) > 0) {
 		(*normal) *= -1;

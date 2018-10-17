@@ -185,7 +185,7 @@ int tutorial_3( const std::string file_name, const char * config )
 
 	Raytracer raytracer( 640, 480, deg2rad( 45.0 ),
 		//175, -140, 130, 0, 0, 35
-		Vector3(0, -4, 0), Vector3( 0, 0, 0 ), config );
+		Vector3(175, -140, 130), Vector3(0, 0, 35), config );
 	raytracer.LoadScene( file_name );
 	raytracer.MainLoop();
 
