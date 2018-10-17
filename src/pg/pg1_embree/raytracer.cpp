@@ -128,7 +128,7 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 	rtcInitIntersectContext(&context);
 	rtcIntersect1(scene_, &context, &(rtcRayHitWithIor.rtcRayHit));
 
-	Vector3 lightPossition = Vector3{ 1000, 1000, 1000 };
+	Vector3 lightPossition = Vector3{ 250, 250, 400 };
 	Color4f resultColor = Color4f{ 0, 0, 0, 1};
 	if (rtcRayHitWithIor.rtcRayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID)
 	{
@@ -145,9 +145,9 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 				float enlighted = castShadowRay(intersectionPoint, vectorToLight, dstToLight, context);
 
 				resultColor = Color4f{
-					(material->ambient.x + enlighted * ((material->diffuse.x * normalLigthScalarProduct) + pow(material->specular.x * viewVector.DotProduct(lr),material->shininess))),
-					(material->ambient.y + enlighted * ((material->diffuse.y * normalLigthScalarProduct) + pow(material->specular.y * viewVector.DotProduct(lr),material->shininess))),
-					(material->ambient.z + enlighted * ((material->diffuse.z * normalLigthScalarProduct) + pow(material->specular.z * viewVector.DotProduct(lr),material->shininess))),
+					(material->ambient.x + enlighted * ((material->diffuse.x * normalLigthScalarProduct) + pow(material->specular.x * (-viewVector).DotProduct(lr),material->shininess))),
+					(material->ambient.y + enlighted * ((material->diffuse.y * normalLigthScalarProduct) + pow(material->specular.y * (-viewVector).DotProduct(lr),material->shininess))),
+					(material->ambient.z + enlighted * ((material->diffuse.z * normalLigthScalarProduct) + pow(material->specular.z * (-viewVector).DotProduct(lr),material->shininess))),
 					1 };
 				break;
 			}
@@ -184,7 +184,7 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 					reflectedRayHitWithIor.rtcRayHit.hit = Raytracer::createEmptyHit();
 					reflectedRayHitWithIor.ior = ior2;
 
-					resultColor = Color4f{ resultColor.r * material->specular.x, resultColor.g * material->specular.y ,resultColor.b * material->specular.z, 1};
+					resultColor = resultColor + Color4f{pow(material->specular.x, material->shininess), pow(material->specular.y, material->shininess),pow(material->specular.z, material->shininess), 1 };
 
 					float T1 = 1;
 					/*if (ior2 != IOR_AIR) {

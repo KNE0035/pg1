@@ -20,7 +20,7 @@ newmtl green_plastic_transparent
 	illum 2
 	Ka 0.03 0.03 0.03
 	Kd 0.85 1.0 0.01
-	Ks 1.0. 1.0 1.0
+	Ks 0.7 0.94 0.0
 	shader 2
 	ior 1.5
 
