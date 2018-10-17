@@ -2,6 +2,7 @@
 #include "simpleguidx11.h"
 #include "surface.h"
 #include "camera.h"
+#include "sphericalMap.h"
 
 /*! \class Raytracer
 \brief General ray tracer class.
@@ -44,8 +45,9 @@ private:
 	
 	Color4f applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth);
 
-	void getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3* vectorToLight, Vector3* normal, Vector3* viewVector, Vector3* intersectionPoint, Vector3 lightPossition, float* dstToLight, Material* material);
+	void getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3* vectorToLight, Vector3* normal, Vector3 viewVector, Vector3* intersectionPoint, Vector3 lightPossition, float* dstToLight, Material* material);
 
+	SphericalMap* sphericalMap;
 	RTCDevice device_;
 	RTCScene scene_;
 	Camera camera_;

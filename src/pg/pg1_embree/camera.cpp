@@ -36,6 +36,7 @@ RTCRay Camera::GenerateRay( const float x_i, const float y_i ) const
 {
 	Vector3 d_c = { x_i - width_ * 0.5f, height_ * 0.5f - y_i, - f_y_  };
 	Vector3 d_w = M_c_w_ * d_c; 
+	d_w.Normalize();
 
 	return Raytracer::createRay(view_from_, d_w);
 }
