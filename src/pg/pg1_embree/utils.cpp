@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#include "vector3.h"
+#include "structs.h"
 
 using std::mt19937;
 using std::uniform_real_distribution;
@@ -198,4 +200,43 @@ char * RTrim( char * s )
 char * Trim( char * s )
 {
 	return RTrim( LTrim( s ) );
+}
+
+RTCRay createRay(Vector3 origin, Vector3 dir, float tfar, float tnear) {
+	RTCRay ray;
+
+	ray.tnear = tnear; // start of ray segment
+
+	ray.org_x = origin.x;
+	ray.org_y = origin.y;
+	ray.org_z = origin.z;
+
+	ray.dir_x = dir.x; // ray direction
+	ray.dir_y = dir.y;
+	ray.dir_z = dir.z;
+	ray.time = 0.0f; // time of this ray for motion blur
+	ray.tfar = tfar; // end of ray segment (set to hit distance)
+
+	ray.mask = 0; // can be used to mask out some geometries for some rays
+	ray.id = 0; // identify a ray inside a callback function
+	ray.flags = 0; // reserved
+	return ray;
+}
+
+RTCHit createEmptyHit() {
+	RTCHit hit;
+	hit.geomID = RTC_INVALID_GEOMETRY_ID;
+	hit.primID = RTC_INVALID_GEOMETRY_ID;
+	hit.Ng_x = 0.0f; // geometry normal
+	hit.Ng_y = 0.0f;
+	hit.Ng_z = 0.0f;
+	return hit;
+}
+
+RTCRayHitWithIor createRayWithEmptyHitAndIor(Vector3 origin, Vector3 dir, float tfar, float tnear, float ior) {
+	RTCRayHitWithIor rtcRayHitWithIor;
+	rtcRayHitWithIor.rtcRayHit.ray = createRay(origin, dir, tfar, tnear);
+	rtcRayHitWithIor.rtcRayHit.hit = createEmptyHit();
+	rtcRayHitWithIor.ior = ior;
+	return rtcRayHitWithIor;
 }

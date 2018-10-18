@@ -16,8 +16,8 @@ public:
 	}
 
 	Color4f getTexel(Vector3 viewVector) {
-		float theta = acosf(viewVector.z) / M_PI;
-		float phi = (atan2f(viewVector.y, viewVector.x) + M_PI) / (2 * M_PI);
+		float theta = acosf(viewVector.z) / float(M_PI);
+		float phi = (atan2f(viewVector.y, viewVector.x) + float(M_PI)) / (2 * float(M_PI));
 
 		Color3f color =  texture->get_texel(1 - phi, theta);
 		return { Color4f {color.r, color.g, color.b, 1} };

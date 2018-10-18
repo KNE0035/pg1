@@ -102,4 +102,9 @@ char * RTrim( char * s );
 */
 char * Trim( char *s );
 
+RTCHit createEmptyHit();
+
+RTCRay createRay(Vector3 origin, Vector3 dir, float tfar = FLT_MAX, float tnear = FLT_MIN);
+
+RTCRayHitWithIor createRayWithEmptyHitAndIor(Vector3 origin, Vector3 dir, float tfar, float tnear, float ior);
 #endif

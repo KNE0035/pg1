@@ -113,9 +113,8 @@ Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 	}*/
 
 	rtcRayHitWithIor.rtcRayHit.ray = camera_.GenerateRay(x + 0.5f, y + 0.5f);
-	rtcRayHitWithIor.rtcRayHit.hit = Raytracer::createEmptyHit();
+	rtcRayHitWithIor.rtcRayHit.hit = createEmptyHit();
 	rtcRayHitWithIor.ior = IOR_AIR;
-	Color4f test = applyShaderInternal(rtcRayHitWithIor, t, 0);
 	return applyShaderInternal(rtcRayHitWithIor, t, 0);
 }
 
@@ -137,18 +136,20 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 		Material* material = NULL;
 
 		getIntersectionInfo(rtcRayHitWithIor, &vectorToLight, &normal, viewVector, &intersectionPoint, lightPossition, &dstToLight, &material);
+		float enlighted = castShadowRay(intersectionPoint, vectorToLight, dstToLight, context);
 
 		switch (material->shader) {
 			case PHONG_SHADER: {
 				float normalLigthScalarProduct = normal.DotProduct(vectorToLight);
 				Vector3 lr = 2 * (normalLigthScalarProduct)* normal - vectorToLight;
-				float enlighted = castShadowRay(intersectionPoint, vectorToLight, dstToLight, context);
+
+				RTCRayHitWithIor phongReflectedRay = createRayWithEmptyHitAndIor(intersectionPoint, lr, FLT_MAX, 0.1, rtcRayHitWithIor.ior);
 
 				resultColor = Color4f{
 					(material->ambient.x + enlighted * ((material->diffuse.x * normalLigthScalarProduct) + pow(material->specular.x * (-viewVector).DotProduct(lr),material->shininess))),
 					(material->ambient.y + enlighted * ((material->diffuse.y * normalLigthScalarProduct) + pow(material->specular.y * (-viewVector).DotProduct(lr),material->shininess))),
 					(material->ambient.z + enlighted * ((material->diffuse.z * normalLigthScalarProduct) + pow(material->specular.z * (-viewVector).DotProduct(lr),material->shininess))),
-					1 };
+					1 } + (applyShaderInternal(phongReflectedRay, t, ++depth) * material->reflectivity);
 				break;
 			}
 			case GLASS_SHADER:				
@@ -176,13 +177,9 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 
 					RTCRayHitWithIor transmittedRayHitWithIor, reflectedRayHitWithIor;
 
-					transmittedRayHitWithIor.rtcRayHit.ray = Raytracer::createRay(intersectionPoint, dirOfTransmittedRay, FLT_MAX, 0.1f);
-					transmittedRayHitWithIor.rtcRayHit.hit = Raytracer::createEmptyHit();
-					transmittedRayHitWithIor.ior = ior2;
 
-					reflectedRayHitWithIor.rtcRayHit.ray = Raytracer::createRay(intersectionPoint, dirOfReflectedRay, FLT_MAX, 0.1f);
-					reflectedRayHitWithIor.rtcRayHit.hit = Raytracer::createEmptyHit();
-					reflectedRayHitWithIor.ior = ior2;
+					transmittedRayHitWithIor = createRayWithEmptyHitAndIor(intersectionPoint, dirOfTransmittedRay, FLT_MAX, 0.1f, ior2);
+					reflectedRayHitWithIor = createRayWithEmptyHitAndIor(intersectionPoint, dirOfReflectedRay, FLT_MAX, 0.1f, ior2);
 
 					resultColor = resultColor + Color4f{pow(material->specular.x, material->shininess), pow(material->specular.y, material->shininess),pow(material->specular.z, material->shininess), 1 };
 
@@ -251,37 +248,6 @@ int Raytracer::Ui()
 	return 0;
 }
 
-RTCRay Raytracer::createRay(Vector3 origin, Vector3 dir, float tfar, float tnear) {
-	RTCRay ray;
-
-	ray.tnear = tnear; // start of ray segment
-
-	ray.org_x = origin.x;
-	ray.org_y = origin.y;
-	ray.org_z = origin.z;
-
-	ray.dir_x = dir.x; // ray direction
-	ray.dir_y = dir.y;
-	ray.dir_z = dir.z;
-	ray.time = 0.0f; // time of this ray for motion blur
-	ray.tfar = tfar; // end of ray segment (set to hit distance)
-
-	ray.mask = 0; // can be used to mask out some geometries for some rays
-	ray.id = 0; // identify a ray inside a callback function
-	ray.flags = 0; // reserved
-	return ray;
-}
-
-RTCHit Raytracer::createEmptyHit() {
-	RTCHit hit;
-	hit.geomID = RTC_INVALID_GEOMETRY_ID;
-	hit.primID = RTC_INVALID_GEOMETRY_ID;
-	hit.Ng_x = 0.0f; // geometry normal
-	hit.Ng_y = 0.0f;
-	hit.Ng_z = 0.0f;
-	return hit;
-}
-
 Vector3 Raytracer::getInterpolatedPoint(RTCRay ray) {
 	return Vector3{
 			ray.org_x + ray.tfar * ray.dir_x,
@@ -291,7 +257,7 @@ Vector3 Raytracer::getInterpolatedPoint(RTCRay ray) {
 }
 
 float Raytracer::castShadowRay(const Vector3 intersectionPoint, Vector3 vectorToLight, const float dist, RTCIntersectContext context) {
-	RTCRay rayFromIntersectPointToLight = Raytracer::createRay(intersectionPoint, vectorToLight, dist, 0.1f);
+	RTCRay rayFromIntersectPointToLight = createRay(intersectionPoint, vectorToLight, dist, 0.1f);
 	rtcOccluded1(scene_, &context, &rayFromIntersectPointToLight);
 	return rayFromIntersectPointToLight.tfar < dist ? 0.0f : 1.0f;
 }

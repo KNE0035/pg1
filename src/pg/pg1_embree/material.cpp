@@ -15,7 +15,7 @@ Material::Material()
 
 	emission = Vector3( 0.0f, 0.0f, 0.0f );	
 
-	reflectivity = static_cast<float>( 0.99 );
+	reflectivity = static_cast<float>( 0.25 );
 	shininess = 1;
 
 	ior = -1;

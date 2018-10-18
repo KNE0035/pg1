@@ -13,7 +13,7 @@ Camera::Camera( const int width, const int height, const float fov_y,
 	view_at_ = view_at;
 
 	// TODO compute focal lenght based on the vertical field of view and the camera resolution
-	f_y_ = height  / (2 * tanf(fov_y * 0.5));
+	f_y_ = height  / (2 * tanf(fov_y * 0.5f));
 	
 	// TODO build M_c_w_ matrix	
 	
@@ -38,5 +38,5 @@ RTCRay Camera::GenerateRay( const float x_i, const float y_i ) const
 	Vector3 d_w = M_c_w_ * d_c; 
 	d_w.Normalize();
 
-	return Raytracer::createRay(view_from_, d_w);
+	return createRay(view_from_, d_w);
 }
