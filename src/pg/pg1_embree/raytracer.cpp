@@ -107,11 +107,21 @@ void Raytracer::LoadScene( const std::string file_name )
 
 Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 	RTCRayHitWithIor rtcRayHitWithIor;
+	Color4f resultColor = {0 ,0 ,0, 1};
 
-	rtcRayHitWithIor.rtcRayHit.ray = camera_.GenerateRay(x + 0.5f, y + 0.5f);
-	rtcRayHitWithIor.rtcRayHit.hit = createEmptyHit();
-	rtcRayHitWithIor.ior = IOR_AIR;
-	return applyShaderInternal(rtcRayHitWithIor, t, 0);
+	for (int i = 0; i < this->antiAliasingSubSamplingConst; i++)
+	{
+		float randomX = Random();
+		float randomY = Random();
+
+		rtcRayHitWithIor.rtcRayHit.ray = camera_.GenerateRay(x + randomX, y + randomY);
+		rtcRayHitWithIor.rtcRayHit.hit = createEmptyHit();
+		rtcRayHitWithIor.ior = IOR_AIR;
+		resultColor = resultColor + applyShaderInternal(rtcRayHitWithIor, t, 0);
+	}
+
+	resultColor = Color4f{ resultColor.r * this->antialiasingNormalizingCoef, resultColor.g * this->antialiasingNormalizingCoef, resultColor.b * this->antialiasingNormalizingCoef, 1 };
+	return resultColor;
 }
 
 Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth)
@@ -194,23 +204,21 @@ Color4f Raytracer::applyGlassShader(RTCRayHitWithIor rtcRayHitWithIor, Intersect
 		transmittedRayHitWithIor = createRayWithEmptyHitAndIor(intersectionInfo.intersectionPoint, dirOfTransmittedRay, FLT_MAX, 0.1f, ior2);
 		reflectedRayHitWithIor = createRayWithEmptyHitAndIor(intersectionInfo.intersectionPoint, dirOfReflectedRay, FLT_MAX, 0.1f, ior2);
 
-		resultColor = (resultColor * intersectionInfo.enlighted) + Color4f{ pow(intersectionInfo.material->specular.x, intersectionInfo.material->shininess), pow(intersectionInfo.material->specular.y, intersectionInfo.material->shininess),pow(intersectionInfo.material->specular.z, intersectionInfo.material->shininess), 1 };
-
-		float attenuation = getAttenuationOfReflectedRay(rtcRayHitWithIor, intersectionInfo.intersectionPoint, ior2);
+		Color4f attenuation = getAttenuationOfReflectedRay(rtcRayHitWithIor, intersectionInfo.intersectionPoint, ior2, intersectionInfo.material);
 
 		depth++;
-		resultColor = resultColor + applyShaderInternal(transmittedRayHitWithIor, t, depth) * T * attenuation;
-		resultColor = resultColor + applyShaderInternal(reflectedRayHitWithIor, t, depth)  * R * attenuation;
+		resultColor = (resultColor + applyShaderInternal(transmittedRayHitWithIor, t, depth) * T) * attenuation;
+		resultColor = (resultColor + applyShaderInternal(reflectedRayHitWithIor, t, depth)  * R) * attenuation;
 	}
 	return resultColor;
 }
 
-float Raytracer::getAttenuationOfReflectedRay(RTCRayHitWithIor rtcRayHitWithIor, Vector3 intersectionPont, float ior2) {
-	float attenuation = 1;
+Color4f Raytracer::getAttenuationOfReflectedRay(RTCRayHitWithIor rtcRayHitWithIor, Vector3 intersectionPoint, float ior2, Material* material) {
+	Color4f attenuation = { 0,0,0,1 };
 	if (ior2 != IOR_AIR) {
-		Vector3 vectorToIntersection = (intersectionPont - Vector3{ rtcRayHitWithIor.rtcRayHit.ray.org_x, rtcRayHitWithIor.rtcRayHit.ray.org_y, rtcRayHitWithIor.rtcRayHit.ray.org_z });
+		Vector3 vectorToIntersection = (intersectionPoint - Vector3{ rtcRayHitWithIor.rtcRayHit.ray.org_x, rtcRayHitWithIor.rtcRayHit.ray.org_y, rtcRayHitWithIor.rtcRayHit.ray.org_z });
 		float dstToIntersection = vectorToIntersection.L2Norm();
-		attenuation = exp(-0.001f*dstToIntersection);
+		attenuation = Color4f{ exp(-material->diffuse.x *dstToIntersection), exp(-material->diffuse.y *dstToIntersection), exp(-material->diffuse.z *dstToIntersection) };
 	}
 	return attenuation;
 }

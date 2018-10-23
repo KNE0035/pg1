@@ -22,6 +22,11 @@ struct RTC_ALIGN( 16 ) Color4f
 	Color4f operator*(const float a) {
 		return Color4f{ this->r * a, this->g * a, this->b * a, this->a };
 	}
+
+	Color4f operator*(const Color4f & v)
+	{
+		return Color4f{ this->r * v.r, this->g * v.g, this->b * v.b, this->a };
+	}
 };
 
 struct Color3f { float r, g, b; };

@@ -142,7 +142,6 @@ int SimpleGuiDX11::MainLoop()
 	// start image producing threads
 	std::thread producer_thread( &SimpleGuiDX11::Producer, this );
 	BOOL r = SetThreadPriority( producer_thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL );
-
 	// and enter message loop
 	MSG msg;
 	ZeroMemory( &msg, sizeof( msg ) );

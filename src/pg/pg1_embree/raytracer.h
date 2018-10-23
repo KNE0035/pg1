@@ -34,6 +34,9 @@ public:
 private:
 	std::vector<Surface *> surfaces_;
 	std::vector<Material *> materials_; 
+
+	int const antiAliasingSubSamplingConst = 8;
+	float const antialiasingNormalizingCoef = 1 / float(antiAliasingSubSamplingConst);
 	
 	float castShadowRay(IntersectionInfo intersectionInfo, RTCIntersectContext context);
 	
@@ -45,7 +48,7 @@ private:
 	Color4f applyPhondShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth);
 	
 	Color4f applyGlassShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth);
-	float getAttenuationOfReflectedRay(RTCRayHitWithIor rtcRayHitWithIor, Vector3 intersectionPont, float ior2);
+	Color4f getAttenuationOfReflectedRay(RTCRayHitWithIor rtcRayHitWithIor, Vector3 intersectionPont, float ior2, Material* material);
 
 	Color4f applyNormalShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t);
 
