@@ -12,6 +12,10 @@
 \version 0.1
 \date 2018
 */
+
+
+struct IntersectionInfo { Vector3 intersectionPoint, vectorToLight, normal, viewToIntersectionVector; float dstToLight, enlighted; Material* material; };
+
 class Raytracer : public SimpleGuiDX11
 {
 public:
@@ -31,12 +35,20 @@ private:
 	std::vector<Surface *> surfaces_;
 	std::vector<Material *> materials_; 
 	
-	float castShadowRay(const Vector3 origin, Vector3 vectorToLight, const float dist, RTCIntersectContext context);
+	float castShadowRay(IntersectionInfo intersectionInfo, RTCIntersectContext context);
 	
 	Color4f applyShader(const int x, const int y, const float t);
 	Color4f applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth);
 
-	void getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3* vectorToLight, Vector3* normal, Vector3 viewVector, Vector3* intersectionPoint, Vector3 lightPossition, float* dstToLight, Material** material);
+	IntersectionInfo getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3 vectorFromCamera, Vector3 lightPossition, RTCIntersectContext context);
+
+	Color4f applyPhondShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth);
+	
+	Color4f applyGlassShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth);
+	float getAttenuationOfReflectedRay(RTCRayHitWithIor rtcRayHitWithIor, Vector3 intersectionPont, float ior2);
+
+	Color4f applyNormalShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t);
+
 
 	int InitDeviceAndScene(const char * config);
 	int ReleaseDeviceAndScene();

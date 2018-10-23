@@ -116,8 +116,8 @@ Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 
 Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth)
 {
-	Vector3 viewVector = Vector3{ rtcRayHitWithIor.rtcRayHit.ray.dir_x, rtcRayHitWithIor.rtcRayHit.ray.dir_y, rtcRayHitWithIor.rtcRayHit.ray.dir_z };
-	if(depth > 5) return sphericalMap->getTexel(viewVector);
+	Vector3 vectorFromCamera = Vector3{ rtcRayHitWithIor.rtcRayHit.ray.dir_x, rtcRayHitWithIor.rtcRayHit.ray.dir_y, rtcRayHitWithIor.rtcRayHit.ray.dir_z };
+	if(depth > 5) return sphericalMap->getTexel(vectorFromCamera);
 
 	RTCIntersectContext context;
 	rtcInitIntersectContext(&context);
@@ -127,76 +127,103 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 	Color4f resultColor = Color4f{ 0, 0, 0, 1};
 	if (rtcRayHitWithIor.rtcRayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID)
 	{
-		Vector3 vectorToLight, normal, intersectionPoint;
-		float dstToLight;
-		Material* material = NULL;
+		IntersectionInfo intersectionInfo;
 
-		getIntersectionInfo(rtcRayHitWithIor, &vectorToLight, &normal, viewVector, &intersectionPoint, lightPossition, &dstToLight, &material);
-		float enlighted = castShadowRay(intersectionPoint, vectorToLight, dstToLight, context);
+		intersectionInfo = getIntersectionInfo(rtcRayHitWithIor, vectorFromCamera, lightPossition, context);
 
-		switch (material->shader) {
+		switch (intersectionInfo.material->shader) {
 			case PHONG_SHADER: {
-				float normalLigthScalarProduct = normal.DotProduct(vectorToLight);
-				Vector3 lr = 2 * (normalLigthScalarProduct)* normal - vectorToLight;
-
-				RTCRayHitWithIor phongReflectedRay = createRayWithEmptyHitAndIor(intersectionPoint, lr, FLT_MAX, 0.1, rtcRayHitWithIor.ior);
-
-				resultColor = Color4f{
-					(material->ambient.x + enlighted * ((material->diffuse.x * normalLigthScalarProduct) + pow(material->specular.x * (-viewVector).DotProduct(lr),material->shininess))),
-					(material->ambient.y + enlighted * ((material->diffuse.y * normalLigthScalarProduct) + pow(material->specular.y * (-viewVector).DotProduct(lr),material->shininess))),
-					(material->ambient.z + enlighted * ((material->diffuse.z * normalLigthScalarProduct) + pow(material->specular.z * (-viewVector).DotProduct(lr),material->shininess))),
-					1 } + (applyShaderInternal(phongReflectedRay, t, ++depth) * material->reflectivity);
+				resultColor = applyPhondShader(rtcRayHitWithIor, intersectionInfo, t, depth);
 				break;
 			}
 			case GLASS_SHADER:				
-				Vector3 dirTowardsObs = -(viewVector), dirOfTransmittedRay, dirOfReflectedRay;
-				float ior1, ior2;
-				float cosAngle1 = normal.DotProduct(dirTowardsObs), cosAngle2 = 0;
-				float Rs, Rp, R, T;
-
-				ior1 = rtcRayHitWithIor.ior;
-			
-				ior2 = ior1 != material->ior ? material->ior : IOR_AIR;
-
-				float sqrCos2 = 1 - sqr(ior1 / ior2) * (1 - sqr(cosAngle1));
-				if (acosf(cosAngle1) > 0 && sqrCos2 > 0) {
-					cosAngle2 = sqrt(sqrCos2);
-					dirOfTransmittedRay = (ior1 / ior2) * viewVector + ((ior1 / ior2) * cosAngle1 - cosAngle2) * normal;
-
-					dirOfReflectedRay = (2 * (normal.DotProduct(dirTowardsObs))) * normal - dirTowardsObs;
-
-					Rs = sqr((ior2 * cosAngle2 - ior1 * cosAngle1) / (ior2 * cosAngle2 + ior1 * cosAngle1));
-					Rp = sqr((ior2 * cosAngle1 - ior1 * cosAngle2) / (ior2 * cosAngle1 + ior1 * cosAngle2));
-					R = (Rs + Rp) * 0.5f;
-
-					T = 1 - R;
-
-					RTCRayHitWithIor transmittedRayHitWithIor, reflectedRayHitWithIor;
-
-
-					transmittedRayHitWithIor = createRayWithEmptyHitAndIor(intersectionPoint, dirOfTransmittedRay, FLT_MAX, 0.1f, ior2);
-					reflectedRayHitWithIor = createRayWithEmptyHitAndIor(intersectionPoint, dirOfReflectedRay, FLT_MAX, 0.1f, ior2);
-
-					resultColor = (resultColor * enlighted) + Color4f{pow(material->specular.x, material->shininess), pow(material->specular.y, material->shininess),pow(material->specular.z, material->shininess), 1 };
-
-					float T1 = 1;
-					if (ior2 != IOR_AIR) {
-						Vector3 vectorToIntersection = (intersectionPoint - Vector3{ rtcRayHitWithIor.rtcRayHit.ray.org_x, rtcRayHitWithIor.rtcRayHit.ray.org_y, rtcRayHitWithIor.rtcRayHit.ray.org_z });
-						float dstToIntersection = vectorToIntersection.L2Norm();
-						T1 = exp(-0.001*dstToIntersection);
-					}
-					
-					depth++;
-					resultColor = resultColor + applyShaderInternal(transmittedRayHitWithIor, t, depth) * T * T1;
-					resultColor = resultColor + applyShaderInternal(reflectedRayHitWithIor, t, depth)  * R * T1;
-
-
-				}
-			}
+				resultColor = applyGlassShader(rtcRayHitWithIor, intersectionInfo, t, depth);
+				break;
+			case NORMAL_SHADER:
+				resultColor = applyNormalShader(rtcRayHitWithIor, intersectionInfo, t);
+				break;
+		}
 	}
 	else {
-		return sphericalMap->getTexel(viewVector);
+		return sphericalMap->getTexel(vectorFromCamera);
 	}
+	return resultColor;
+}
+
+Color4f Raytracer::applyPhondShader(RTCRayHitWithIor rtcRayHitWithIor,IntersectionInfo intersectionInfo, float t, int depth) {
+	Color4f resultColor;
+	float normalLigthScalarProduct = intersectionInfo.normal.DotProduct(intersectionInfo.vectorToLight);
+	Vector3 lr = 2 * (normalLigthScalarProduct)* intersectionInfo.normal - intersectionInfo.vectorToLight;
+
+	RTCRayHitWithIor phongReflectedRay = createRayWithEmptyHitAndIor(intersectionInfo.intersectionPoint, lr, FLT_MAX, 0.1f, rtcRayHitWithIor.ior);
+
+	resultColor = Color4f{
+		(intersectionInfo.material->ambient.x + intersectionInfo.enlighted * ((intersectionInfo.material->diffuse.x * normalLigthScalarProduct) + pow(intersectionInfo.material->specular.x * (-intersectionInfo.viewToIntersectionVector).DotProduct(lr), intersectionInfo.material->shininess))),
+		(intersectionInfo.material->ambient.y + intersectionInfo.enlighted * ((intersectionInfo.material->diffuse.y * normalLigthScalarProduct) + pow(intersectionInfo.material->specular.y * (-intersectionInfo.viewToIntersectionVector).DotProduct(lr), intersectionInfo.material->shininess))),
+		(intersectionInfo.material->ambient.z + intersectionInfo.enlighted * ((intersectionInfo.material->diffuse.z * normalLigthScalarProduct) + pow(intersectionInfo.material->specular.z * (-intersectionInfo.viewToIntersectionVector).DotProduct(lr), intersectionInfo.material->shininess))),
+		1 } +(applyShaderInternal(phongReflectedRay, t, ++depth) * intersectionInfo.material->reflectivity);
+	return resultColor;
+}
+
+Color4f Raytracer::applyGlassShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth) {
+	Vector3 dirTowardsObs = -(intersectionInfo.viewToIntersectionVector), dirOfTransmittedRay, dirOfReflectedRay;
+	Color4f resultColor = Color4f {0,0,0,1};
+	float ior1, ior2;
+	float cosAngle1 = intersectionInfo.normal.DotProduct(dirTowardsObs), cosAngle2 = 0;
+	float Rs, Rp, R, T;
+
+	ior1 = rtcRayHitWithIor.ior;
+
+	ior2 = ior1 != intersectionInfo.material->ior ? intersectionInfo.material->ior : IOR_AIR;
+
+	float sqrCos2 = 1 - sqr(ior1 / ior2) * (1 - sqr(cosAngle1));
+	if (acosf(cosAngle1) > 0 && sqrCos2 > 0) {
+		cosAngle2 = sqrt(sqrCos2);
+		
+		dirOfTransmittedRay = (ior1 / ior2) * intersectionInfo.viewToIntersectionVector + ((ior1 / ior2) * cosAngle1 - cosAngle2) * intersectionInfo.normal;
+		dirOfReflectedRay = (2 * (intersectionInfo.normal.DotProduct(dirTowardsObs))) * intersectionInfo.normal - dirTowardsObs;
+
+		Rs = sqr((ior2 * cosAngle2 - ior1 * cosAngle1) / (ior2 * cosAngle2 + ior1 * cosAngle1));
+		Rp = sqr((ior2 * cosAngle1 - ior1 * cosAngle2) / (ior2 * cosAngle1 + ior1 * cosAngle2));
+		R = (Rs + Rp) * 0.5f;
+
+		T = 1 - R;
+
+		RTCRayHitWithIor transmittedRayHitWithIor, reflectedRayHitWithIor;
+
+		transmittedRayHitWithIor = createRayWithEmptyHitAndIor(intersectionInfo.intersectionPoint, dirOfTransmittedRay, FLT_MAX, 0.1f, ior2);
+		reflectedRayHitWithIor = createRayWithEmptyHitAndIor(intersectionInfo.intersectionPoint, dirOfReflectedRay, FLT_MAX, 0.1f, ior2);
+
+		resultColor = (resultColor * intersectionInfo.enlighted) + Color4f{ pow(intersectionInfo.material->specular.x, intersectionInfo.material->shininess), pow(intersectionInfo.material->specular.y, intersectionInfo.material->shininess),pow(intersectionInfo.material->specular.z, intersectionInfo.material->shininess), 1 };
+
+		float attenuation = getAttenuationOfReflectedRay(rtcRayHitWithIor, intersectionInfo.intersectionPoint, ior2);
+
+		depth++;
+		resultColor = resultColor + applyShaderInternal(transmittedRayHitWithIor, t, depth) * T * attenuation;
+		resultColor = resultColor + applyShaderInternal(reflectedRayHitWithIor, t, depth)  * R * attenuation;
+	}
+	return resultColor;
+}
+
+float Raytracer::getAttenuationOfReflectedRay(RTCRayHitWithIor rtcRayHitWithIor, Vector3 intersectionPont, float ior2) {
+	float attenuation = 1;
+	if (ior2 != IOR_AIR) {
+		Vector3 vectorToIntersection = (intersectionPont - Vector3{ rtcRayHitWithIor.rtcRayHit.ray.org_x, rtcRayHitWithIor.rtcRayHit.ray.org_y, rtcRayHitWithIor.rtcRayHit.ray.org_z });
+		float dstToIntersection = vectorToIntersection.L2Norm();
+		attenuation = exp(-0.001f*dstToIntersection);
+	}
+	return attenuation;
+}
+
+Color4f Raytracer::applyNormalShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t) {
+	Color4f resultColor;
+	float normalLigthScalarProduct = intersectionInfo.normal.DotProduct(intersectionInfo.vectorToLight);
+
+	resultColor = Color4f{
+		(intersectionInfo.material->diffuse.x * normalLigthScalarProduct),
+		(intersectionInfo.material->diffuse.y * normalLigthScalarProduct),
+		(intersectionInfo.material->diffuse.z * normalLigthScalarProduct),
+		1 };
 	return resultColor;
 }
 
@@ -253,27 +280,34 @@ Vector3 Raytracer::getInterpolatedPoint(RTCRay ray) {
 	};
 }
 
-float Raytracer::castShadowRay(const Vector3 intersectionPoint, Vector3 vectorToLight, const float dist, RTCIntersectContext context) {
-	RTCRay rayFromIntersectPointToLight = createRay(intersectionPoint, vectorToLight, dist, 0.1f);
+float Raytracer::castShadowRay(IntersectionInfo intersectionInfo, RTCIntersectContext context) {
+	RTCRay rayFromIntersectPointToLight = createRay(intersectionInfo.intersectionPoint, intersectionInfo.vectorToLight, intersectionInfo.dstToLight, 0.1f);
 	rtcOccluded1(scene_, &context, &rayFromIntersectPointToLight);
-	return rayFromIntersectPointToLight.tfar < dist ? 0.0f : 1.0f;
+	return rayFromIntersectPointToLight.tfar < intersectionInfo.dstToLight ? 0.0f : 1.0f;
 }
 
-void Raytracer::getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3* vectorToLight, Vector3* normal, Vector3 viewVector, Vector3* intersectionPoint, Vector3 lightPossition, float* dstToLight, Material** material) {
-	*intersectionPoint = Raytracer::getInterpolatedPoint(rtcRayHitWithIor.rtcRayHit.ray);
+IntersectionInfo Raytracer::getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3 vectorFromCamera, Vector3 lightPossition, RTCIntersectContext context) {
+	IntersectionInfo intersectionInfo;
+	
+	intersectionInfo.intersectionPoint = Raytracer::getInterpolatedPoint(rtcRayHitWithIor.rtcRayHit.ray);
 
-	*vectorToLight = (lightPossition - (*intersectionPoint));
-	*dstToLight = (*vectorToLight).L2Norm();
-	(*vectorToLight).Normalize();
+	intersectionInfo.vectorToLight = (lightPossition - intersectionInfo.intersectionPoint);
+	intersectionInfo.dstToLight = (intersectionInfo.vectorToLight).L2Norm();
+	(intersectionInfo.vectorToLight).Normalize();
 
 	RTCGeometry geometry = rtcGetGeometry(scene_, rtcRayHitWithIor.rtcRayHit.hit.geomID);
 	
 	rtcInterpolate0(geometry, rtcRayHitWithIor.rtcRayHit.hit.primID, rtcRayHitWithIor.rtcRayHit.hit.u, rtcRayHitWithIor.rtcRayHit.hit.v,
-		RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, 0, &(normal->x), 3);
+		RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, 0, &(intersectionInfo.normal.x), 3);
 
-	*material = ((Material *)rtcGetGeometryUserData(geometry));
+	intersectionInfo.material = ((Material *)rtcGetGeometryUserData(geometry));
 
-	if (viewVector.DotProduct(*normal) > 0) {
-		(*normal) *= -1;
+	if (vectorFromCamera.DotProduct(intersectionInfo.normal) > 0) {
+		intersectionInfo.normal *= -1;
 	}
+
+	intersectionInfo.enlighted = castShadowRay(intersectionInfo, context);
+	intersectionInfo.viewToIntersectionVector = vectorFromCamera;
+
+	return intersectionInfo;
 }
