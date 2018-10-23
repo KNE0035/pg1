@@ -38,7 +38,6 @@ private:
 
 	void getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3* vectorToLight, Vector3* normal, Vector3 viewVector, Vector3* intersectionPoint, Vector3 lightPossition, float* dstToLight, Material** material);
 
-
 	int InitDeviceAndScene(const char * config);
 	int ReleaseDeviceAndScene();
 

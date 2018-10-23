@@ -12,7 +12,7 @@ class SphericalMap
 {
 public:
 	SphericalMap() { 
-		texture = new Texture("../../../data/sph3.jpg");
+		texture = new Texture("../../../data/sph2.jpg");
 	}
 
 	Color4f getTexel(Vector3 viewVector) {

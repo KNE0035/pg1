@@ -108,10 +108,6 @@ void Raytracer::LoadScene( const std::string file_name )
 Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 	RTCRayHitWithIor rtcRayHitWithIor;
 
-	/*if ((x == 306) && (y == 91)) {
-		printf("test");
-	}*/
-
 	rtcRayHitWithIor.rtcRayHit.ray = camera_.GenerateRay(x + 0.5f, y + 0.5f);
 	rtcRayHitWithIor.rtcRayHit.hit = createEmptyHit();
 	rtcRayHitWithIor.ior = IOR_AIR;
@@ -181,14 +177,14 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 					transmittedRayHitWithIor = createRayWithEmptyHitAndIor(intersectionPoint, dirOfTransmittedRay, FLT_MAX, 0.1f, ior2);
 					reflectedRayHitWithIor = createRayWithEmptyHitAndIor(intersectionPoint, dirOfReflectedRay, FLT_MAX, 0.1f, ior2);
 
-					resultColor = resultColor + Color4f{pow(material->specular.x, material->shininess), pow(material->specular.y, material->shininess),pow(material->specular.z, material->shininess), 1 };
+					resultColor = (resultColor * enlighted) + Color4f{pow(material->specular.x, material->shininess), pow(material->specular.y, material->shininess),pow(material->specular.z, material->shininess), 1 };
 
 					float T1 = 1;
-					/*if (ior2 != IOR_AIR) {
+					if (ior2 != IOR_AIR) {
 						Vector3 vectorToIntersection = (intersectionPoint - Vector3{ rtcRayHitWithIor.rtcRayHit.ray.org_x, rtcRayHitWithIor.rtcRayHit.ray.org_y, rtcRayHitWithIor.rtcRayHit.ray.org_z });
 						float dstToIntersection = vectorToIntersection.L2Norm();
-						T1 = exp(-0.0000001*dstToIntersection);
-					}*/
+						T1 = exp(-0.001*dstToIntersection);
+					}
 					
 					depth++;
 					resultColor = resultColor + applyShaderInternal(transmittedRayHitWithIor, t, depth) * T * T1;
@@ -203,6 +199,7 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 	}
 	return resultColor;
 }
+
 Color4f Raytracer::get_pixel(const int x, const int y, const float t)
 {
 	return applyShader(x, y, t);;
