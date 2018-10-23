@@ -127,7 +127,7 @@ Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth)
 {
 	Vector3 vectorFromCamera = Vector3{ rtcRayHitWithIor.rtcRayHit.ray.dir_x, rtcRayHitWithIor.rtcRayHit.ray.dir_y, rtcRayHitWithIor.rtcRayHit.ray.dir_z };
-	if(depth > 5) return sphericalMap->getTexel(vectorFromCamera);
+	if(depth > 3) return sphericalMap->getTexel(vectorFromCamera);
 
 	RTCIntersectContext context;
 	rtcInitIntersectContext(&context);
@@ -207,18 +207,18 @@ Color4f Raytracer::applyGlassShader(RTCRayHitWithIor rtcRayHitWithIor, Intersect
 		Color4f attenuation = getAttenuationOfReflectedRay(rtcRayHitWithIor, intersectionInfo.intersectionPoint, ior2, intersectionInfo.material);
 
 		depth++;
-		resultColor = (resultColor + applyShaderInternal(transmittedRayHitWithIor, t, depth) * T) * attenuation;
-		resultColor = (resultColor + applyShaderInternal(reflectedRayHitWithIor, t, depth)  * R) * attenuation;
+		resultColor = resultColor + ((applyShaderInternal(transmittedRayHitWithIor, t, depth) * T) * attenuation);
+		resultColor = resultColor + ((applyShaderInternal(reflectedRayHitWithIor, t, depth)  * R) * attenuation);
 	}
 	return resultColor;
 }
 
 Color4f Raytracer::getAttenuationOfReflectedRay(RTCRayHitWithIor rtcRayHitWithIor, Vector3 intersectionPoint, float ior2, Material* material) {
-	Color4f attenuation = { 0,0,0,1 };
+	Color4f attenuation = { 1,1,1,1 };
 	if (ior2 != IOR_AIR) {
 		Vector3 vectorToIntersection = (intersectionPoint - Vector3{ rtcRayHitWithIor.rtcRayHit.ray.org_x, rtcRayHitWithIor.rtcRayHit.ray.org_y, rtcRayHitWithIor.rtcRayHit.ray.org_z });
 		float dstToIntersection = vectorToIntersection.L2Norm();
-		attenuation = Color4f{ exp(-material->diffuse.x *dstToIntersection), exp(-material->diffuse.y *dstToIntersection), exp(-material->diffuse.z *dstToIntersection) };
+		attenuation = Color4f{ exp(-0.0001f*dstToIntersection) * material->diffuse.x, exp(-0.0001f*dstToIntersection) * material->diffuse.y, exp(-0.0001f*dstToIntersection) * material->diffuse.z };
 	}
 	return attenuation;
 }
