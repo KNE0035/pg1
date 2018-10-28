@@ -117,6 +117,7 @@ public:
 	static const char kNormalMapSlot; /*!< Èíslo slotu normálové textury. */
 	static const char kOpacityMapSlot; /*!< Èíslo slotu transparentní textury. */
 
+	void convertMaterialColorsToLRRG();
 private:
 	Texture * textures_[NO_TEXTURES]; /*!< Pole ukazatelù na textury. */
 	/*

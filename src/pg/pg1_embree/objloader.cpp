@@ -193,6 +193,11 @@ int LoadMTL( const char * file_name, const char * path, std::vector<Material *> 
 	{
 		material->set_name( material_name );
 		materials.push_back( material );
+
+		for (Material *material : materials) {
+			material->convertMaterialColorsToLRRG();
+		}
+
 		printf( "\r%I64u material(s)\t\t", materials.size() );
 	}
 	material = NULL;
@@ -499,6 +504,5 @@ int LoadOBJ( const char * file_name, std::vector<Surface *> & surfaces, std::vec
 	SAFE_DELETE_ARRAY( buffer );	
 
 	printf( "\nDone.\n\n");
-
 	return no_surfaces;
 }

@@ -240,3 +240,11 @@ RTCRayHitWithIor createRayWithEmptyHitAndIor(Vector3 origin, Vector3 dir, float 
 	rtcRayHitWithIor.ior = ior;
 	return rtcRayHitWithIor;
 }
+
+float getLRGBColorValueForComponent(float colorComponent, const float colorComponentFactor) {
+	return colorComponent <= 0.04045 ? colorComponent * colorComponentFactor : pow((colorComponent + 0.055f) / (1 + 0.055f), 2.4f);
+}
+
+float getSRGBColorValueForComponent(float colorComponent, const float colorCompomenentPower) {
+	return colorComponent <= 0.0031308f ? 12.92f * colorComponent : (1 + 0.055f) * pow(colorComponent, colorCompomenentPower) - 0.055f;
+}

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "camera.h"
 #include "raytracer.h"
-
+#include "utils.h"
 Camera::Camera( const int width, const int height, const float fov_y,
 	const Vector3 view_from, const Vector3 view_at )
 {

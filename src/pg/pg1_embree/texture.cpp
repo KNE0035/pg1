@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "texture.h"
+#include "utils.h"
+
 
 Texture::Texture( const char * file_name )
 {
@@ -72,12 +74,12 @@ Color3f Texture::get_texel( const float u, const float v ) const
 	const int x = max( 0, min( width_ - 1, int( u * width_ ) ) );
 	const int y = max( 0, min( height_ - 1, int( v * height_ ) ) );
 
-	const int offset = y * scan_width_ + x * pixel_size_;
-	const float b = data_[offset] / 255.0f;
-	const float g = data_[offset + 1] / 255.0f;
-	const float r = data_[offset + 2] / 255.0f;
+	int offset = y * scan_width_ + x * pixel_size_;
+	float b = data_[offset] / 255.0f;
+	float g = data_[offset + 1] / 255.0f;
+	float r = data_[offset + 2] / 255.0f;
 	
-	return Color3f{ r, g, b };
+	return Color3f{ getLRGBColorValueForComponent(r), getLRGBColorValueForComponent(g), getLRGBColorValueForComponent(b) };
 }
 
 int Texture::width() const

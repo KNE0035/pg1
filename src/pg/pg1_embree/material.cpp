@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "material.h"
+#include "utils.h"
 
 const char Material::kDiffuseMapSlot = 0;
 const char Material::kSpecularMapSlot = 1;
@@ -82,4 +83,22 @@ Texture * Material::get_texture( const int slot ) const
 
 void Material::set_shader(Shader shader) {
 	this->shader = shader;
+}
+
+void Material::convertMaterialColorsToLRRG() {
+	this->ambient.x = getLRGBColorValueForComponent(this->ambient.x);
+	this->ambient.y = getLRGBColorValueForComponent(this->ambient.y);
+	this->ambient.z = getLRGBColorValueForComponent(this->ambient.z);
+
+	this->diffuse.x = getLRGBColorValueForComponent(this->diffuse.x);
+	this->diffuse.y = getLRGBColorValueForComponent(this->diffuse.y);
+	this->diffuse.z = getLRGBColorValueForComponent(this->diffuse.z);
+
+	this->specular.x = getLRGBColorValueForComponent(this->specular.x);
+	this->specular.y = getLRGBColorValueForComponent(this->specular.y);
+	this->specular.z = getLRGBColorValueForComponent(this->specular.z);
+
+	this->emission.x = getLRGBColorValueForComponent(this->emission.x);
+	this->emission.y = getLRGBColorValueForComponent(this->emission.y);
+	this->emission.z = getLRGBColorValueForComponent(this->emission.z);
 }

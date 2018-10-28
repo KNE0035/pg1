@@ -3,6 +3,7 @@
 #include "objloader.h"
 #include "tutorials.h"
 #include "mymath.h" 
+#include "utils.h" 
 
 Raytracer::Raytracer( const int width, const int height,
 	const float fov_y, const Vector3 view_from, const Vector3 view_at,
@@ -120,7 +121,11 @@ Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 		resultColor = resultColor + applyShaderInternal(rtcRayHitWithIor, t, 0);
 	}
 
-	resultColor = Color4f{ resultColor.r * this->antialiasingNormalizingCoef, resultColor.g * this->antialiasingNormalizingCoef, resultColor.b * this->antialiasingNormalizingCoef, 1 };
+	resultColor = Color4f{ 
+		getSRGBColorValueForComponent(resultColor.r * this->antialiasingNormalizingCoef),
+		getSRGBColorValueForComponent(resultColor.g * this->antialiasingNormalizingCoef), 
+		getSRGBColorValueForComponent(resultColor.b * this->antialiasingNormalizingCoef), 
+		1 };
 	return resultColor;
 }
 

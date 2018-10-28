@@ -1,6 +1,8 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+#include"vector3.h"
+
 #define MAT_ELEM( mat, type, x, y ) reinterpret_cast<type *>( ( mat ).data + \
 	( mat ).step * ( y ) + ( mat ).elemSize() * ( x ) )
 
@@ -107,4 +109,9 @@ RTCHit createEmptyHit();
 RTCRay createRay(Vector3 origin, Vector3 dir, float tfar = FLT_MAX, float tnear = FLT_MIN);
 
 RTCRayHitWithIor createRayWithEmptyHitAndIor(Vector3 origin, Vector3 dir, float tfar, float tnear, float ior);
+
+float getLRGBColorValueForComponent(float colorComponent, const float colorComponentFactor = 1 / 12.92f);
+
+float getSRGBColorValueForComponent(float colorComponent, const float colorCompomenentPower = 1 / 2.4f);
+
 #endif

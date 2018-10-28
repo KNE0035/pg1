@@ -1,30 +1,34 @@
 #pragma once
+
+#ifndef SIMPLE_GUI_IDX
+#define SIMPLE_GUI_IDX
+
 #include "simpleguidx11.h"
 #include "structs.h"
 
 class SimpleGuiDX11
 {
-public:	
-	SimpleGuiDX11( const int width, const int height );	
-	~SimpleGuiDX11();		
-	
-	int MainLoop();	
+public:
+	SimpleGuiDX11(const int width, const int height);
+	~SimpleGuiDX11();
+
+	int MainLoop();
 
 protected:
 	int Init();
-	int Cleanup();	
+	int Cleanup();
 
 	void CreateRenderTarget();
 	void CleanupRenderTarget();
-	HRESULT CreateDeviceD3D( HWND hWnd );
+	HRESULT CreateDeviceD3D(HWND hWnd);
 	void CleanupDeviceD3D();
 
 	HRESULT CreateTexture();
-	LRESULT WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam );
-	static LRESULT CALLBACK s_WndProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam );		
+	LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	static LRESULT CALLBACK s_WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	virtual int Ui();
-	virtual Color4f get_pixel( const int x, const int y, const float t = 0.0f );
+	virtual Color4f get_pixel(const int x, const int y, const float t = 0.0f);
 
 	void Producer();
 
@@ -33,7 +37,7 @@ protected:
 
 	bool vsync_{ true };
 
-private:	
+private:
 	WNDCLASSEX wc_;
 	HWND hwnd_;
 
@@ -43,11 +47,14 @@ private:
 	ID3D11RenderTargetView * g_mainRenderTargetView{ nullptr };
 
 	ID3D11Texture2D * tex_id_{ nullptr };
-	ID3D11ShaderResourceView * tex_view_{nullptr};
+	ID3D11ShaderResourceView * tex_view_{ nullptr };
 	int width_{ 640 };
 	int height_{ 480 };
 	float * tex_data_{ nullptr }; // DXGI_FORMAT_R32G32B32A32_FLOAT
 	std::mutex tex_data_lock_;
-		
-	std::atomic<bool> finish_request_{ false };	
+
+	std::atomic<bool> finish_request_{ false };
 };
+
+
+#endif // !SIMPLE_GUI_IDX
