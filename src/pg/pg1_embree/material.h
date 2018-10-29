@@ -24,7 +24,7 @@
 */
 #define IOR_GLASS 1.5f
 
-enum Shader { PHONG_SHADER = 1, GLASS_SHADER = 2, NORMAL_SHADER = 3 };
+enum Shader { PHONG_SHADER = 1, GLASS_SHADER = 2, NORMAL_SHADER = 3, WHITTED_SHADER = 4 };
 
 /*! \class Material
 \brief A simple material.
