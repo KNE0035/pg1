@@ -44,12 +44,12 @@ int Raytracer::ReleaseDeviceAndScene()
 void Raytracer::LoadScene( const std::string file_name )
 {
 	const int no_surfaces = LoadOBJ( file_name.c_str(), surfaces_, materials_ );
-	cubeMap = new CubeMap("../../../data/Yokohama/posx.jpg",
-						  "../../../data/Yokohama/negx.jpg", 
-						  "../../../data/Yokohama/posy.jpg", 
-						  "../../../data/Yokohama/negy.jpg", 
-						  "../../../data/Yokohama/posz.jpg", 
-						  "../../../data/Yokohama/negz.jpg" );
+	cubeMap = new CubeMap("../../../data/Storforsen4/posx.jpg",
+						  "../../../data/Storforsen4/negx.jpg", 
+						  "../../../data/Storforsen4/posy.jpg", 
+						  "../../../data/Storforsen4/negy.jpg", 
+						  "../../../data/Storforsen4/posz.jpg", 
+						  "../../../data/Storforsen4/negz.jpg" );
 	
 	// surfaces loop
 	for ( auto surface : surfaces_ )
@@ -136,8 +136,8 @@ Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 
 Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth)
 {
-	Vector3 vectorFromCamera = Vector3{ rtcRayHitWithIor.rtcRayHit.ray.dir_x, rtcRayHitWithIor.rtcRayHit.ray.dir_y, rtcRayHitWithIor.rtcRayHit.ray.dir_z };
-	if(depth > 4) return cubeMap->getTexel(vectorFromCamera);
+	Vector3 toIntersectionVector = Vector3{ rtcRayHitWithIor.rtcRayHit.ray.dir_x, rtcRayHitWithIor.rtcRayHit.ray.dir_y, rtcRayHitWithIor.rtcRayHit.ray.dir_z };
+	if(depth > 4) return cubeMap->getTexel(toIntersectionVector);
 
 	RTCIntersectContext context;
 	rtcInitIntersectContext(&context);
@@ -149,7 +149,7 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 	{
 		IntersectionInfo intersectionInfo;
 
-		intersectionInfo = getIntersectionInfo(rtcRayHitWithIor, vectorFromCamera, lightPossition, context);
+		intersectionInfo = getIntersectionInfo(rtcRayHitWithIor, toIntersectionVector, lightPossition, context);
 
 		/*if (intersectionInfo.enlighted == 0.0f && intersectionInfo.material->shader != GLASS_SHADER)
 		{
@@ -172,7 +172,7 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 		}
 	}
 	else {
-		return cubeMap->getTexel(vectorFromCamera);
+		return cubeMap->getTexel(toIntersectionVector);
 	}
 	return resultColor;
 }

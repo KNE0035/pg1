@@ -15,7 +15,7 @@ public:
 
 	CubeMap(string posxFile, string negxFile, string posyFile, string negyFile, string poszFile, string negzFile);
 
-	Color4f getTexel(Vector3 viewToIntersectionVector);
+	Color4f getTexel(Vector3 toIntersectionVector);
 
 	~CubeMap();
 
