@@ -15,12 +15,12 @@ public:
 		texture = new Texture("../../../data/sph2.jpg");
 	}
 
-	Color4f getTexel(Vector3 viewVector) {
-		float theta = acosf(viewVector.z) / float(M_PI);
-		float phi = (atan2f(viewVector.y, viewVector.x) + float(M_PI)) / (2 * float(M_PI));
+	Color4f getTexel(Vector3 viewToIntersectionVector) {
+		float theta = acosf(viewToIntersectionVector.z) / float(M_PI);
+		float phi = (atan2f(viewToIntersectionVector.y, viewToIntersectionVector.x) + float(M_PI)) / (2 * float(M_PI));
 
 		Color3f color =  texture->get_texel(1 - phi, theta);
-		return { Color4f {color.r, color.g, color.b, 1} };
+		return Color4f {color.r, color.g, color.b, 1};
 	}
 
 

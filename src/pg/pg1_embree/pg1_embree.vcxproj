@@ -167,6 +167,7 @@
     <ClInclude Include="..\..\libs\imgui\stb_textedit.h" />
     <ClInclude Include="..\..\libs\imgui\stb_truetype.h" />
     <ClInclude Include="camera.h" />
+    <ClInclude Include="CubeMap.h" />
     <ClInclude Include="sphericalMap.h" />
     <ClInclude Include="material.h" />
     <ClInclude Include="matrix3x3.h" />
@@ -192,6 +193,7 @@
     <ClCompile Include="..\..\libs\imgui\imgui_impl_dx11.cpp" />
     <ClCompile Include="..\..\libs\imgui\imgui_impl_win32.cpp" />
     <ClCompile Include="camera.cpp" />
+    <ClCompile Include="CubeMap.cpp" />
     <ClCompile Include="material.cpp" />
     <ClCompile Include="matrix3x3.cpp" />
     <ClCompile Include="mymath.cpp" />

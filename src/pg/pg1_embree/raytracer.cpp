@@ -44,7 +44,12 @@ int Raytracer::ReleaseDeviceAndScene()
 void Raytracer::LoadScene( const std::string file_name )
 {
 	const int no_surfaces = LoadOBJ( file_name.c_str(), surfaces_, materials_ );
-	sphericalMap = new SphericalMap();
+	cubeMap = new CubeMap("../../../data/Yokohama/posx.jpg",
+						  "../../../data/Yokohama/negx.jpg", 
+						  "../../../data/Yokohama/posy.jpg", 
+						  "../../../data/Yokohama/negy.jpg", 
+						  "../../../data/Yokohama/posz.jpg", 
+						  "../../../data/Yokohama/negz.jpg" );
 	
 	// surfaces loop
 	for ( auto surface : surfaces_ )
@@ -132,7 +137,7 @@ Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth)
 {
 	Vector3 vectorFromCamera = Vector3{ rtcRayHitWithIor.rtcRayHit.ray.dir_x, rtcRayHitWithIor.rtcRayHit.ray.dir_y, rtcRayHitWithIor.rtcRayHit.ray.dir_z };
-	if(depth > 4) return sphericalMap->getTexel(vectorFromCamera);
+	if(depth > 4) return cubeMap->getTexel(vectorFromCamera);
 
 	RTCIntersectContext context;
 	rtcInitIntersectContext(&context);
@@ -153,7 +158,7 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 
 		switch (intersectionInfo.material->shader) {
 			case PHONG_SHADER:
-				resultColor = applyPhondShader(rtcRayHitWithIor, intersectionInfo, t, depth);
+				resultColor = applyPhongShader(rtcRayHitWithIor, intersectionInfo, t, depth);
 				break;
 			case GLASS_SHADER:				
 				resultColor = applyGlassShader(rtcRayHitWithIor, intersectionInfo, t, depth);
@@ -167,12 +172,12 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 		}
 	}
 	else {
-		return sphericalMap->getTexel(vectorFromCamera);
+		return cubeMap->getTexel(vectorFromCamera);
 	}
 	return resultColor;
 }
 
-Color4f Raytracer::applyPhondShader(RTCRayHitWithIor rtcRayHitWithIor,IntersectionInfo intersectionInfo, float t, int depth) {
+Color4f Raytracer::applyPhongShader(RTCRayHitWithIor rtcRayHitWithIor,IntersectionInfo intersectionInfo, float t, int depth) {
 	Color4f resultColor;
 	float normalLigthScalarProduct = intersectionInfo.normal.DotProduct(intersectionInfo.vectorToLight);
 	Vector3 lr = 2 * (normalLigthScalarProduct)* intersectionInfo.normal - intersectionInfo.vectorToLight;

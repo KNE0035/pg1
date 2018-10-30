@@ -5,7 +5,7 @@
 #include "simpleguidx11.h"
 #include "surface.h"
 #include "camera.h"
-#include "sphericalMap.h"
+#include "CubeMap.h"
 
 /*! \class Raytracer
 \brief General ray tracer class.
@@ -37,7 +37,7 @@ private:
 	std::vector<Surface *> surfaces_;
 	std::vector<Material *> materials_;
 
-	int const antiAliasingSubSamplingConst = 16;
+	int const antiAliasingSubSamplingConst = 1;
 	float const antialiasingNormalizingCoef = 1 / float(antiAliasingSubSamplingConst);
 	float const sRGBToLinearPower = 1 / 2.4f;
 
@@ -48,7 +48,7 @@ private:
 
 	IntersectionInfo getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3 vectorFromCamera, Vector3 lightPossition, RTCIntersectContext context);
 
-	Color4f applyPhondShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth);
+	Color4f applyPhongShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth);
 	Color4f applyGlassShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth);
 	Color4f applyWhittedShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth);
 	Color4f applyNormalShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t);
@@ -60,7 +60,7 @@ private:
 	int InitDeviceAndScene(const char * config);
 	int ReleaseDeviceAndScene();
 
-	SphericalMap* sphericalMap;
+	CubeMap* cubeMap;
 	RTCDevice device_;
 	RTCScene scene_;
 	Camera camera_;
