@@ -6,6 +6,7 @@
 #include "surface.h"
 #include "camera.h"
 #include "CubeMap.h"
+#include "sphericalMap.h"
 
 /*! \class Raytracer
 \brief General ray tracer class.
@@ -37,7 +38,7 @@ private:
 	std::vector<Surface *> surfaces_;
 	std::vector<Material *> materials_;
 
-	int const antiAliasingSubSamplingConst = 1;
+	int const antiAliasingSubSamplingConst = 8;
 	float const antialiasingNormalizingCoef = 1 / float(antiAliasingSubSamplingConst);
 	float const sRGBToLinearPower = 1 / 2.4f;
 
@@ -53,7 +54,7 @@ private:
 	Color4f applyWhittedShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth);
 	Color4f applyNormalShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t);
 
-	Color4f getAttenuationOfReflectedRay(RTCRayHitWithIor rtcRayHitWithIor, Vector3 intersectionPont, float ior2, Material* material);
+	Color4f getAttenuationOfRay(RTCRayHitWithIor rtcRayHitWithIor, Vector3 intersectionPont, float actualIor, Material* material);
 
 	
 
@@ -61,6 +62,7 @@ private:
 	int ReleaseDeviceAndScene();
 
 	CubeMap* cubeMap;
+	SphericalMap* sphericalMap;
 	RTCDevice device_;
 	RTCScene scene_;
 	Camera camera_;
