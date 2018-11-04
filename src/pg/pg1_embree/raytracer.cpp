@@ -259,8 +259,8 @@ Color4f Raytracer::applyNormalShader(RTCRayHitWithIor rtcRayHitWithIor, Intersec
 }
 
 Color4f Raytracer::applyWhittedShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth) {
-	float normalLigthScalarProduct = intersectionInfo.normal.DotProduct(-intersectionInfo.viewToIntersectionVector);
-	Vector3 lr = 2 * (normalLigthScalarProduct)* intersectionInfo.normal - (-intersectionInfo.viewToIntersectionVector);
+	float normalViewScalarProduct = intersectionInfo.normal.DotProduct(-intersectionInfo.viewToIntersectionVector);
+	Vector3 lr = 2 * (normalViewScalarProduct)* intersectionInfo.normal - (-intersectionInfo.viewToIntersectionVector);
 
 	RTCRayHitWithIor reflectedRay = createRayWithEmptyHitAndIor(intersectionInfo.intersectionPoint, lr, FLT_MAX, 0.1f, rtcRayHitWithIor.ior);
 
