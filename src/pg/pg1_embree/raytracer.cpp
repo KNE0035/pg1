@@ -184,6 +184,7 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 Color4f Raytracer::applyPhongShader(RTCRayHitWithIor rtcRayHitWithIor,IntersectionInfo intersectionInfo, float t, int depth) {
 	Color4f resultColor;
 	float normalLigthScalarProduct = intersectionInfo.normal.DotProduct(intersectionInfo.vectorToLight);
+	Vector3 lr = 2 * (normalLigthScalarProduct)* intersectionInfo.normal - intersectionInfo.vectorToLight;
 
 	resultColor = Color4f{
 		(intersectionInfo.material->ambient.x + intersectionInfo.enlighted * ((intersectionInfo.material->diffuse.x * normalLigthScalarProduct) + pow(intersectionInfo.material->specular.x * (-intersectionInfo.viewToIntersectionVector).DotProduct(lr), intersectionInfo.material->shininess))),
