@@ -46,12 +46,12 @@ int Raytracer::ReleaseDeviceAndScene()
 void Raytracer::LoadScene( const std::string file_name )
 {
 	const int no_surfaces = LoadOBJ( file_name.c_str(), surfaces_, materials_ );
-	cubeMap = new CubeMap("../../../data/Storforsen4/posx.jpg",
-						  "../../../data/Storforsen4/negx.jpg",
-						  "../../../data/Storforsen4/negy.jpg",
-						  "../../../data/Storforsen4/posy.jpg",
-						  "../../../data/Storforsen4/posz.jpg",
-						  "../../../data/Storforsen4/negz.jpg");
+	cubeMap = new CubeMap("../../../data/Yokohama/posx.jpg",
+						  "../../../data/Yokohama/negx.jpg",
+						  "../../../data/Yokohama/posy.jpg",
+						  "../../../data/Yokohama/negy.jpg",
+						  "../../../data/Yokohama/posz.jpg",
+						  "../../../data/Yokohama/negz.jpg");
 	
 	sphericalMap = new SphericalMap();
 
@@ -141,7 +141,7 @@ Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth)
 {
 	Vector3 toIntersectionVector = Vector3{ rtcRayHitWithIor.rtcRayHit.ray.dir_x, rtcRayHitWithIor.rtcRayHit.ray.dir_y, rtcRayHitWithIor.rtcRayHit.ray.dir_z };
-	if(depth > 4) return sphericalMap->getTexel(toIntersectionVector);
+	if (depth > 4) return  Color4f{ 0,0,0,1 };// cubeMap->getTexel(toIntersectionVector);
 
 	RTCIntersectContext context;
 	rtcInitIntersectContext(&context);
@@ -173,12 +173,40 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 			case NORMAL_SHADER:
 				resultColor = applyNormalShader(rtcRayHitWithIor, intersectionInfo, t);
 				break;
+			case  PHYSICALLY_BASED_SHADER:
+				Color4f emmision = Color4f{ intersectionInfo.material->emission.x, intersectionInfo.material->emission.y, intersectionInfo.material->emission.z, 1 };
+				if (emmision.r != 0 && emmision.g != 0 && emmision.b != 0) {
+					return emmision;
+				}
+				Vector3 omegaI = sampleHemisphere(intersectionInfo.normal);
+				float inversePdf = 2 * M_PI;
+
+				Color4f l_i = applyShaderInternal(createRayWithEmptyHitAndIor(intersectionInfo.intersectionPoint, omegaI, FLT_MAX, 0.1f, IOR_AIR), t, depth++);
+				Color4f fR = Color4f{ intersectionInfo.material->diffuse.x, intersectionInfo.material->diffuse.y ,intersectionInfo.material->diffuse.z } *(1 / M_PI);
+				resultColor = emmision + l_i * fR * omegaI.DotProduct(intersectionInfo.normal) * inversePdf;
+				break;
 		}
 	}
 	else {
-		return sphericalMap->getTexel(toIntersectionVector);
+		return Color4f{ 0,0,0,1 };// cubeMap->getTexel(toIntersectionVector);
 	}
 	return resultColor;
+}
+
+Vector3 Raytracer::sampleHemisphere(Vector3 normal) {
+	float randomU = Random();
+	float randomV = Random();
+
+	float x = 2 * cosf(2 * M_PI * randomU) * sqrt(randomV * (1 - randomV));
+	float y = 2 * sinf(2 * M_PI * randomU) * sqrt(randomV * (1 - randomV));
+	float z = 1 - 2 * randomV;
+
+	Vector3 omegaI = Vector3{ x, y, z };
+
+	if (omegaI.DotProduct(normal)) {
+		omegaI *= -1;
+	}
+	return omegaI;
 }
 
 Color4f Raytracer::applyPhongShader(RTCRayHitWithIor rtcRayHitWithIor,IntersectionInfo intersectionInfo, float t, int depth) {

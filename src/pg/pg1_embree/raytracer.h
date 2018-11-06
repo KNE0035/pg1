@@ -38,7 +38,7 @@ private:
 	std::vector<Surface *> surfaces_;
 	std::vector<Material *> materials_;
 
-	int const antiAliasingSubSamplingConst = 8;
+	int const antiAliasingSubSamplingConst = 1;
 	float const antialiasingNormalizingCoef = 1 / float(antiAliasingSubSamplingConst);
 	float const sRGBToLinearPower = 1 / 2.4f;
 
@@ -56,7 +56,7 @@ private:
 
 	Color4f getAttenuationOfRay(RTCRayHitWithIor rtcRayHitWithIor, Vector3 intersectionPont, float actualIor, Material* material);
 
-	
+	Vector3 sampleHemisphere(Vector3 normal);
 
 	int InitDeviceAndScene(const char * config);
 	int ReleaseDeviceAndScene();
