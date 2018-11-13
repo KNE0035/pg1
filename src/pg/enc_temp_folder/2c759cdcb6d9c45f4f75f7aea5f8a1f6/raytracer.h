@@ -45,7 +45,7 @@ private:
 	float castShadowRay(IntersectionInfo intersectionInfo, RTCIntersectContext context);
 
 	Color4f applyShader(const int x, const int y, const float t);
-	Color4f applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth, bool* isObjectSource);
+	Color4f applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth);
 
 	IntersectionInfo getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3 vectorFromCamera, Vector3 lightPossition, RTCIntersectContext context);
 
