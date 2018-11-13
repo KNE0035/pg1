@@ -17,7 +17,7 @@
 */
 
 
-struct IntersectionInfo { Vector3 intersectionPoint, vectorToLight, normal, viewToIntersectionVector; float dstToLight, enlighted; Material* material; };
+struct IntersectionInfo { Vector3 intersectionPoint, vectorToLight, normal, viewToIntersectionVector; float dstToLight, enlighted; Material* material; Coord2f tex_coord; };
 
 class Raytracer : public SimpleGuiDX11
 {
@@ -54,7 +54,7 @@ private:
 	Color4f applyWhittedShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth);
 	Color4f applyNormalShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t);
 
-	Color4f getAttenuationOfRay(RTCRayHitWithIor rtcRayHitWithIor, Vector3 intersectionPont, float actualIor, Material* material);
+	Color4f getAttenuationOfRay(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float actualIor, Material* material);
 
 	Vector3 sampleHemisphere(Vector3 normal);
 

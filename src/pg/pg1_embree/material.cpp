@@ -2,6 +2,9 @@
 #include "material.h"
 #include "utils.h"
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 const char Material::kDiffuseMapSlot = 0;
 const char Material::kSpecularMapSlot = 1;
 const char Material::kNormalMapSlot = 2;
@@ -101,4 +104,24 @@ void Material::convertMaterialColorsToLRRG() {
 	this->emission.x = getLRGBColorValueForComponent(this->emission.x);
 	this->emission.y = getLRGBColorValueForComponent(this->emission.y);
 	this->emission.z = getLRGBColorValueForComponent(this->emission.z);
+}
+
+Vector3 Material::getDiffuse(Coord2f tex_coord) {
+
+	if (textures_[kDiffuseMapSlot]) {
+		Color3f color = textures_[kDiffuseMapSlot]->get_texel(tex_coord.u, 1 - tex_coord.v);
+		return Vector3 { color.r, color.g, color.b };
+	}
+
+	return this->diffuse;
+}
+
+Vector3 Material::getSpecular(Coord2f tex_coord) {
+
+	if (textures_[kSpecularMapSlot]) {
+		Color3f color = textures_[kDiffuseMapSlot]->get_texel(tex_coord.u, 1 - tex_coord.v);
+		return Vector3{ color.r, color.g, color.b };
+	}
+
+	return this->specular;
 }

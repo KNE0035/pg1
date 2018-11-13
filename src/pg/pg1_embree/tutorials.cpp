@@ -184,10 +184,10 @@ int tutorial_3( const std::string file_name, const char * config )
 	//gui.MainLoop();
 
 	Raytracer raytracer( 640, 480, deg2rad( 45.0 ),
-		//175, -140, 130, 0, 0, 35
+		// avenger 175, -140, 130, 0, 0, 35
 		//cornell box 40, -940, 250.... 0, 0, 250
 		// (-140 -940 250) (* 0.5).... (-200 0 250) *0.25
-		Vector3(175, -140, 130), Vector3(0, 0, 35), config );
+		Vector3(40, -940, 250), Vector3(0, 0, 250), config );
 	raytracer.LoadScene( file_name );
 	raytracer.MainLoop();
 

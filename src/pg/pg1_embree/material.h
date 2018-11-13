@@ -97,6 +97,10 @@ public:
 	\return Ukazatel na zvolenou texturu.
 	*/
 	Texture * get_texture( const int slot ) const;
+	
+	Vector3 getDiffuse(Coord2f tex_coord);
+	Vector3 getSpecular(Coord2f tex_coord);
+	void convertMaterialColorsToLRRG();
 
 public:
 	Shader shader;
@@ -116,8 +120,6 @@ public:
 	static const char kSpecularMapSlot; /*!< Èíslo slotu spekulární textury. */
 	static const char kNormalMapSlot; /*!< Èíslo slotu normálové textury. */
 	static const char kOpacityMapSlot; /*!< Èíslo slotu transparentní textury. */
-
-	void convertMaterialColorsToLRRG();
 private:
 	Texture * textures_[NO_TEXTURES]; /*!< Pole ukazatelù na textury. */
 	/*

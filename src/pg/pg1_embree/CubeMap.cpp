@@ -60,5 +60,7 @@ void CubeMap::setUVForLargestComponent(float largestComponent, float componentU,
 
 CubeMap::~CubeMap()
 {
-	delete[] this->textures;
+	for (int i = 0; i < 6; i++) {
+		delete this->textures[i];
+	}
 }
