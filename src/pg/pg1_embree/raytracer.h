@@ -38,7 +38,7 @@ private:
 	std::vector<Surface *> surfaces_;
 	std::vector<Material *> materials_;
 
-	int const antiAliasingSubSamplingConst = 1000;
+	int const antiAliasingSubSamplingConst = 1;
 	float const antialiasingNormalizingCoef = 1 / float(antiAliasingSubSamplingConst);
 	float const sRGBToLinearPower = 1 / 2.4f;
 

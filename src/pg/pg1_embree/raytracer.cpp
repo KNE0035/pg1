@@ -141,7 +141,7 @@ Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth, bool* isObjectSource)
 {
 	Vector3 toIntersectionVector = Vector3{ rtcRayHitWithIor.rtcRayHit.ray.dir_x, rtcRayHitWithIor.rtcRayHit.ray.dir_y, rtcRayHitWithIor.rtcRayHit.ray.dir_z };
-	if (depth > 4) return  Color4f{ 0,0,0,1 }; //return cubeMap->getTexel(toIntersectionVector);
+	if (depth > 4)  return cubeMap->getTexel(toIntersectionVector);
 	//return  Color4f{ 0,0,0,1 };// 
 
 	RTCIntersectContext context;
@@ -190,7 +190,7 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 				Vector3 omegaI = sampleHemisphere(intersectionInfo.normal);
 				
 				float inversePdf = 2 * M_PI;
-				bool* isNextObjectSource;
+				bool* isNextObjectSource = false;
 
 				Color4f l_i = applyShaderInternal(createRayWithEmptyHitAndIor(intersectionInfo.intersectionPoint, omegaI, FLT_MAX, 0.1f, IOR_AIR), t, depth++, isNextObjectSource);
 				
@@ -203,7 +203,7 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 		}
 	}
 	else {
-		return  Color4f{ 0,0,0,1 };  //cubeMap->getTexel(toIntersectionVector);
+		return  cubeMap->getTexel(toIntersectionVector);
 	}
 
 	return resultColor;
@@ -275,7 +275,7 @@ Color4f Raytracer::applyGlassShader(RTCRayHitWithIor rtcRayHitWithIor, Intersect
 	}
 	else {
 		reflectedRayHitWithIor = createRayWithEmptyHitAndIor(intersectionInfo.intersectionPoint, dirOfReflectedRay, FLT_MAX, 0.1f, ior2);
-		resultColor = resultColor + applyShaderInternal(reflectedRayHitWithIor, t, depth);
+		resultColor = resultColor + applyShaderInternal(reflectedRayHitWithIor, t, depth, NULL);
 	}
 	resultColor = resultColor * attenuation;
 	return resultColor;
