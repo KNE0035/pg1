@@ -38,14 +38,14 @@ private:
 	std::vector<Surface *> surfaces_;
 	std::vector<Material *> materials_;
 
-	int const antiAliasingSubSamplingConst = 100;
+	int const antiAliasingSubSamplingConst = 80;
 	float const antialiasingNormalizingCoef = 1 / float(antiAliasingSubSamplingConst);
 	float const sRGBToLinearPower = 1 / 2.4f;
 
 	float castShadowRay(IntersectionInfo intersectionInfo, RTCIntersectContext context);
 
 	Color4f applyShader(const int x, const int y, const float t);
-	Color4f applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth, bool* isObjectSource);
+	Color4f applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth, bool* isObjectSource, IntersectionInfo* nextIntersectionInfo = NULL);
 
 	IntersectionInfo getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3 vectorFromCamera, Vector3 lightPossition, RTCIntersectContext context);
 
