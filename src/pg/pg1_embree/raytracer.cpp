@@ -185,18 +185,6 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 			resultColor = applyNormalShader(rtcRayHitWithIor, intersectionInfo, t);
 			break;
 		case  PHYSICALLY_BASED_SHADER:
-			/*float randomX = Random() * 100 - 50; //generate in interval -50 and 50
-			float randomY = Random() * 100 - 50; //generate in interval -50 and 50
-			Vector3 sourcePoint(randomX, randomY, 489); //489 heaight of source
-			intersectionInfo.vectorToLight = (sourcePoint - intersectionInfo.intersectionPoint);
-			intersectionInfo.dstToLight = (intersectionInfo.vectorToLight).L2Norm();
-			intersectionInfo.vectorToLight.Normalize();
-			castShadowRay(intersectionInfo, context);*/
-
-			/*if (castShadowRay(*nextIntersectionInfo, context) == 0) {
-				return resultColor;
-			}*/
-
 			resultColor = applyPhysicallyBasedShader(rtcRayHitWithIor, intersectionInfo, t, depth);
 			break;
 		}
@@ -235,16 +223,26 @@ Color4f Raytracer::applyPhysicallyBasedShader(RTCRayHitWithIor rtcRayHitWithIor,
 
 	Vector3 omegaI = sampleHemisphere(intersectionInfo.normal);
 
-	float pdf = 2 * M_PI;
+	float inversePdf = 2 * M_PI;
 	bool isNextObjectSource = false;
 	IntersectionInfo nextIntersectionInfo = IntersectionInfo();
 	Color4f l_i = applyShaderInternal(createRayWithEmptyHitAndIor(intersectionInfo.intersectionPoint, omegaI, FLT_MAX, 0.1f, IOR_AIR), t, depth, &isNextObjectSource, &nextIntersectionInfo);
+	
+	float randomX = Random() * 100 - 50; //generate in interval -50 and 50
+	float randomY = Random() * 100 - 50; //generate in interval -50 and 50
+	Vector3 sourcePoint(randomX, randomY, 489); //489 heaight of source
+	intersectionInfo.vectorToLight = (sourcePoint - intersectionInfo.intersectionPoint);
+	intersectionInfo.dstToLight = (intersectionInfo.vectorToLight).L2Norm();
+	intersectionInfo.vectorToLight.Normalize();
+	castShadowRay(intersectionInfo, context);
+	
 	double geometryTerm = (intersectionInfo.normal.DotProduct(omegaI) *  nextIntersectionInfo.normal.DotProduct(-omegaI)) 
 							/ sqr((intersectionInfo.intersectionPoint - nextIntersectionInfo.intersectionPoint).L2Norm());
 
 	Color4f fR = Color4f{ intersectionInfo.material->diffuse.x, intersectionInfo.material->diffuse.y, intersectionInfo.material->diffuse.z, 1 } *(1 / M_PI);
-	resultColor = resultColor + l_i * fR * omegaI.DotProduct(intersectionInfo.normal) * pdf * geometryTerm;
-	//samplovaci strategie ... samplovani hemisfery umerne cosinu + raye do osvetleni (plosna formulace) zdroj - ke je nenulove vyska 489 random float v rozsahu -50 az 50 normala je 0,0,-1
+	resultColor = resultColor + l_i * fR * omegaI.DotProduct(intersectionInfo.normal) * inversePdf * geometryTerm;
+	//samplovaci strategie ... samplovani hemisfery umerne cosinu + raye do osvetleni (plosna formulace) zdroj - kde je nenulove vyska 489 random float v rozsahu -50 az 50 normala je 0,0,-1
+	//dodelat rusian roulet... predtim jeste samplovani vazene cosinusem... + geometryterm a visibility
 	return resultColor;
 }
 

@@ -183,7 +183,7 @@ int tutorial_3( const std::string file_name, const char * config )
 	//SimpleGuiDX11 gui( 640, 480 );
 	//gui.MainLoop();
 
-	Raytracer raytracer( 640, 480, deg2rad( 45.0 ),
+	Raytracer raytracer( 64, 48, deg2rad( 45.0 ),
 		// avenger 175, -140, 130, 0, 0, 35
 		//cornell box 40, -940, 250.... 0, 0, 250
 		// (-140 -940 250) (* 0.5).... (-200 0 250) *0.25
