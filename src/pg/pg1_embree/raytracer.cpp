@@ -240,7 +240,7 @@ Color4f Raytracer::applyPhysicallyBasedShader(RTCRayHitWithIor rtcRayHitWithIor,
 	IntersectionInfo nextIntersectionInfo = IntersectionInfo();
 	Color4f l_i = applyShaderInternal(createRayWithEmptyHitAndIor(intersectionInfo.intersectionPoint, omegaI, FLT_MAX, 0.1f, IOR_AIR), t, depth, &isNextObjectSource, &nextIntersectionInfo);
 	double geometryTerm = (intersectionInfo.normal.DotProduct(omegaI) *  nextIntersectionInfo.normal.DotProduct(-omegaI)) 
-							/ (intersectionInfo.intersectionPoint - nextIntersectionInfo.intersectionPoint).L2Norm();
+							/ sqr((intersectionInfo.intersectionPoint - nextIntersectionInfo.intersectionPoint).L2Norm());
 
 	Color4f fR = Color4f{ intersectionInfo.material->diffuse.x, intersectionInfo.material->diffuse.y, intersectionInfo.material->diffuse.z, 1 } *(1 / M_PI);
 	resultColor = resultColor + l_i * fR * omegaI.DotProduct(intersectionInfo.normal) * pdf * geometryTerm;
