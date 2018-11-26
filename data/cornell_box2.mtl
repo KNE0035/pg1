@@ -65,7 +65,7 @@ newmtl mirror
   Ka 0.1 0.1 0.1
 	Kd 0.0 0.0 1.0
 	Ks 1.0 1.0 1.0
-  shader 5
+  shader 4
   
 newmtl clear_glass	
 	Kd 0.01 0.01 0.01  	   

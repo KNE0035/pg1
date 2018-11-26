@@ -38,14 +38,16 @@ private:
 	std::vector<Surface *> surfaces_;
 	std::vector<Material *> materials_;
 
-	int const antiAliasingSubSamplingConst = 80;
+	int const antiAliasingSubSamplingConst = 100;
 	float const antialiasingNormalizingCoef = 1 / float(antiAliasingSubSamplingConst);
 	float const sRGBToLinearPower = 1 / 2.4f;
 
 	float castShadowRay(IntersectionInfo intersectionInfo, RTCIntersectContext context);
 
+	float getGeometryTerm(Vector3 omegaI, IntersectionInfo intersectionInfo, RTCIntersectContext context);
+
 	Color4f applyShader(const int x, const int y, const float t);
-	Color4f applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth, bool* isObjectSource, IntersectionInfo* nextIntersectionInfo = NULL);
+	Color4f applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float t, int depth);
 
 	IntersectionInfo getIntersectionInfo(RTCRayHitWithIor rtcRayHitWithIor, Vector3 vectorFromCamera, Vector3 lightPossition, RTCIntersectContext context);
 
@@ -54,9 +56,11 @@ private:
 	Color4f applyWhittedShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth);
 	Color4f applyNormalShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t);
 	Color4f applyLambertShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t);
-	Color4f applyPhysicallyBasedShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth);
+	Color4f applyPhysicallyBasedShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth, RTCIntersectContext context);
 
 	Color4f getAttenuationOfRay(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float actualIor, Material* material);
+
+	bool russianRouleteBasedOnDiffuse(Material* material);
 
 	Vector3 sampleHemisphere(Vector3 normal);
 
