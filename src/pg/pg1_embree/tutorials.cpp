@@ -192,6 +192,7 @@ int tutorial_3( const std::string file_name, const char * config )
 
 	//geosphere
 	//Raytracer raytracer( 640, 480, deg2rad( 45.0 ), Vector3(0, -4, 0), Vector3(0, 0, 0), config );
+	//theta je uhel mezi h a normalem
 
 	raytracer.LoadScene( file_name );
 	raytracer.MainLoop();

@@ -101,9 +101,10 @@ void SimpleGuiDX11::Producer()
 
 		// compute rendering
 		//std::this_thread::sleep_for( std::chrono::milliseconds( 50 ) );
-//#pragma omp parallel for
+		#pragma omp parallel for
 		for ( int y = 0; y < height_; ++y )
-		{		
+		{	
+			#pragma omp parallel for
 			for ( int x = 0; x < width_; ++x )
 			{				
 				const Color4f pixel = get_pixel( x, y, t );
@@ -113,7 +114,7 @@ void SimpleGuiDX11::Producer()
 				local_data[offset + 1] = pixel.g;
 				local_data[offset + 2] = pixel.b;
 				local_data[offset + 3] = pixel.a;
-				//pixel.copy( local_data[offset] );
+				//pixel.copy( local_data[offset]);
 			}
 		}
 
