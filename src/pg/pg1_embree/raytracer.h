@@ -60,9 +60,9 @@ private:
 
 	Color4f getAttenuationOfRay(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float actualIor, Material* material);
 
-	bool russianRouleteBasedOnDiffuse(Material* material);
+	bool russianRouleteBasedOnAcummulatedColor(Color4f accumulatedColor);
 
-	Vector3 sampleHemisphere(Vector3 normal);
+	Vector3 sampleHemisphere(Vector3 normal, float& pdf);
 
 	int InitDeviceAndScene(const char * config);
 	int ReleaseDeviceAndScene();
