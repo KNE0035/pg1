@@ -198,7 +198,7 @@ bool Raytracer::russianRouleteBasedOnAcummulatedColor(Color4f accumulatedColor) 
 }
 
 Vector3 Raytracer::sampleHemisphere(Vector3 normal, float& pdf) {
-	/*float randomU = Random();
+	float randomU = Random();
 	float randomV = Random();
 
 	float x = cosf(2 * M_PI * randomU) * sqrt(1 - randomV);
@@ -211,17 +211,18 @@ Vector3 Raytracer::sampleHemisphere(Vector3 normal, float& pdf) {
 	Matrix3x3 transformationMatrix = Matrix3x3(normal, O1, O2);
 	
 	Vector3 omegaI = Vector3{ x, y, z };
+	//pdf = M_PI / normal.DotProduct(omegaI);
 	omegaI = transformationMatrix * omegaI;
 
 	if (omegaI.DotProduct(normal) < 0) {
 		omegaI *= -1;
 	}
 
-	pdf = M_PI / normal.DotProduct(omegaI);
+	pdf = normal.DotProduct(omegaI) / M_PI;
 
-	return omegaI.Normalize();*/
+	return omegaI;
 
-	float randomU = Random();	float randomV = Random();
+	/*float randomU = Random();	float randomV = Random();
 
 	float x = 2 * cosf(2 * M_PI * randomU) * sqrt(randomV * (1 - randomV));
 	float y = 2 * sinf(2 * M_PI * randomU) * sqrt(randomV * (1 - randomV));
@@ -234,7 +235,7 @@ Vector3 Raytracer::sampleHemisphere(Vector3 normal, float& pdf) {
 	}
 
 	pdf = 1 / (2 * M_PI);
-	return omegaI;
+	return omegaI;*/
 }
 
 Color4f Raytracer::applyPhysicallyBasedShader(RTCRayHitWithIor rtcRayHitWithIor, IntersectionInfo intersectionInfo, float t, int depth, RTCIntersectContext context) {
