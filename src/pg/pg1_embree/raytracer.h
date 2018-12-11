@@ -26,7 +26,7 @@ public:
 		const float fov_y, const Vector3 view_from, const Vector3 view_at,
 		const char * config = "threads=0,verbose=3");
 	~Raytracer();
-
+	int counter = 0;
 	void LoadScene(const std::string file_name);
 
 	Color4f get_pixel(const int x, const int y, const float t = 0.0f) override;
@@ -38,7 +38,7 @@ private:
 	std::vector<Surface *> surfaces_;
 	std::vector<Material *> materials_;
 
-	int const antiAliasingSubSamplingConst = 10000;
+	int const antiAliasingSubSamplingConst = 100;
 	float const antialiasingNormalizingCoef = 1 / float(antiAliasingSubSamplingConst);
 	float const sRGBToLinearPower = 1 / 2.4f;
 

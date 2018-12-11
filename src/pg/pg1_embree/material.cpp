@@ -100,10 +100,6 @@ void Material::convertMaterialColorsToLRRG() {
 	this->specular.x = getLRGBColorValueForComponent(this->specular.x);
 	this->specular.y = getLRGBColorValueForComponent(this->specular.y);
 	this->specular.z = getLRGBColorValueForComponent(this->specular.z);
-
-	this->emission.x = getLRGBColorValueForComponent(this->emission.x);
-	this->emission.y = getLRGBColorValueForComponent(this->emission.y);
-	this->emission.z = getLRGBColorValueForComponent(this->emission.z);
 }
 
 Vector3 Material::getDiffuse(Coord2f tex_coord) {
