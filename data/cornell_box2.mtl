@@ -55,7 +55,7 @@ newmtl white_phong
 	Ks 0.8 0.8 0.8
   Ke 0.0 0.0 0.0
   ior 1.5
-  shader 5
+  shader 2
 
 newmtl mirror
 	Ns 32
@@ -67,7 +67,7 @@ newmtl mirror
 	Kd 0.0 0.0 1.0
 	Ks 1.0 1.0 1.0
 	Ke 0.0 0.0 0.0
-  shader 5
+  shader 4
   
 newmtl clear_glass	
 	Kd 0.01 0.01 0.01  
