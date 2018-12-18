@@ -10,7 +10,6 @@ Raytracer::Raytracer( const int width, const int height,
 	const char * config ) : SimpleGuiDX11( width, height )
 {
 	InitDeviceAndScene( config );
-
 	camera_ = Camera( width, height, fov_y, view_from, view_at );
 }
 
@@ -116,6 +115,7 @@ void Raytracer::LoadScene( const std::string file_name )
 }
 
 Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
+	applyGamma(gamma);
 	RTCRayHitWithIor rtcRayHitWithIor;
 	Color4f resultColor = {0 ,0 ,0, 1};
 
@@ -132,11 +132,10 @@ Color4f Raytracer::applyShader(const int x, const int y, const float t = 0.0f) {
 	}
 
 	resultColor = resultColor / antiAliasingSubSamplingConst;
-
 	resultColor = Color4f{ 
 		getSRGBColorValueForComponent(resultColor.r),
-		getSRGBColorValueForComponent(resultColor.g), 
-		getSRGBColorValueForComponent(resultColor.b), 
+		getSRGBColorValueForComponent(resultColor.g),
+		getSRGBColorValueForComponent(resultColor.b),
 		1 };
 	return resultColor;
 }
@@ -147,8 +146,8 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 
 	Vector3 toIntersectionVector = Vector3{ rtcRayHitWithIor.rtcRayHit.ray.dir_x, rtcRayHitWithIor.rtcRayHit.ray.dir_y, rtcRayHitWithIor.rtcRayHit.ray.dir_z };
 
-	if (depth > 20 || !russianRouleteBasedOnPrudence(prudence)) {
-		return Color4f{ 0,0,0,1 };//return sphericalMap->getTexel(toIntersectionVector);
+	if (depth > 4 || !russianRouleteBasedOnPrudence(prudence)) {
+		return sphericalMap->getTexel(toIntersectionVector);
 	}
 	
 
@@ -156,7 +155,7 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 	rtcInitIntersectContext(&context);
 	rtcIntersect1(scene_, &context, &(rtcRayHitWithIor.rtcRayHit));
 
-	Vector3 lightPossition = Vector3{ 250, 250, 400 };
+	Vector3 lightPossition = Vector3{ 0, 0, 400 };
 	if (rtcRayHitWithIor.rtcRayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID)
 	{
 		IntersectionInfo intersectionInfo = getIntersectionInfo(rtcRayHitWithIor, toIntersectionVector, lightPossition, context);
@@ -167,11 +166,6 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 				return emmision;
 			}
 		}
-		
-		/*if (intersectionInfo.enlighted == 0.0f)
-		{
-			return Color4f{ intersectionInfo.material->ambient.x, intersectionInfo.material->ambient.y, intersectionInfo.material->ambient.z, 1 };
-		}*/
 
 		switch (intersectionInfo.material->shader) {
 		case LAMBERT_SHADER:
@@ -195,7 +189,7 @@ Color4f Raytracer::applyShaderInternal(RTCRayHitWithIor rtcRayHitWithIor, float 
 		}
 	}
 	else {
-		return Color4f{ 0,0,0, 1 };
+		//return Color4f{ 0,0,0, 1 };
 		return sphericalMap->getTexel(toIntersectionVector);
 	}
 	return resultColor;
@@ -258,15 +252,15 @@ Color4f Raytracer::applyPhysicallyBasedShader(RTCRayHitWithIor rtcRayHitWithIor,
 
 	float pdf = 0;
 	Vector3 omegaI = sampleHemisphere(intersectionInfo.normal, pdf);
-	Color4f fR = Color4f{ intersectionInfo.material->diffuse.x, intersectionInfo.material->diffuse.y, intersectionInfo.material->diffuse.z, 1 } * (1 / M_PI);
+	Color4f diffuseColor = Color4f{ intersectionInfo.material->diffuse.x, intersectionInfo.material->diffuse.y, intersectionInfo.material->diffuse.z, 1 };
+	Color4f lambertfR = (diffuseColor / M_PI) / prudence;
 
-	prudence *= 0.9;
-	Color4f l_i = applyShaderInternal(createRayWithEmptyHitAndIor(intersectionInfo.intersectionPoint, omegaI, FLT_MAX, 0.01f, rtcRayHitWithIor.ior), t, depth, prudence);
-	resultColor = l_i * fR * omegaI.DotProduct(intersectionInfo.normal) / pdf;
+	float newPrudence = max(diffuseColor.r, max(diffuseColor.g, diffuseColor.b));
+	Color4f l_i = applyShaderInternal(createRayWithEmptyHitAndIor(intersectionInfo.intersectionPoint, omegaI, FLT_MAX, 0.01f, rtcRayHitWithIor.ior), t, depth, newPrudence);
+	resultColor = l_i * lambertfR * (omegaI.DotProduct(intersectionInfo.normal) / pdf);
 	
 	Color4f sourceColor = Color4f{ 10, 10, 10, 1 };
-	Color4f areaForm = fR * sourceColor * getGeometryTerm(intersectionInfo, context);
-
+	Color4f areaForm = lambertfR * sourceColor * getGeometryTerm(intersectionInfo, context);
 	resultColor = resultColor + areaForm;
 	
 	return resultColor;
@@ -299,6 +293,11 @@ float Raytracer::getGeometryTerm(IntersectionInfo intersectionInfo, RTCIntersect
 }
 
 Color4f Raytracer::applyPhongShader(RTCRayHitWithIor rtcRayHitWithIor,IntersectionInfo intersectionInfo, float t, int depth) {
+	if (intersectionInfo.enlighted == 0.0f)
+	{
+		return Color4f{ intersectionInfo.material->ambient.x, intersectionInfo.material->ambient.y, intersectionInfo.material->ambient.z, 1 };
+	}
+	
 	Color4f resultColor;
 	float normalLigthScalarProduct = intersectionInfo.normal.DotProduct(intersectionInfo.vectorToLight);
 	float normalViewScalarProduct = intersectionInfo.normal.DotProduct(-intersectionInfo.viewToIntersectionVector);
@@ -309,9 +308,9 @@ Color4f Raytracer::applyPhongShader(RTCRayHitWithIor rtcRayHitWithIor,Intersecti
 	RTCRayHitWithIor reflectedRay = createRayWithEmptyHitAndIor(intersectionInfo.intersectionPoint, reflectedRayDir, FLT_MAX, 0.01f, rtcRayHitWithIor.ior);
 
 	resultColor = Color4f{
-		(intersectionInfo.material->ambient.x + intersectionInfo.enlighted * ((intersectionInfo.material->getDiffuse(intersectionInfo.tex_coord).x * normalLigthScalarProduct) + pow(intersectionInfo.material->getSpecular(intersectionInfo.tex_coord).x * (-intersectionInfo.viewToIntersectionVector).DotProduct(lr), intersectionInfo.material->shininess))),
-		(intersectionInfo.material->ambient.y + intersectionInfo.enlighted * ((intersectionInfo.material->getDiffuse(intersectionInfo.tex_coord).y * normalLigthScalarProduct) + pow(intersectionInfo.material->getSpecular(intersectionInfo.tex_coord).y * (-intersectionInfo.viewToIntersectionVector).DotProduct(lr), intersectionInfo.material->shininess))),
-		(intersectionInfo.material->ambient.z + intersectionInfo.enlighted * ((intersectionInfo.material->getDiffuse(intersectionInfo.tex_coord).z * normalLigthScalarProduct) + pow(intersectionInfo.material->getSpecular(intersectionInfo.tex_coord).z * (-intersectionInfo.viewToIntersectionVector).DotProduct(lr), intersectionInfo.material->shininess))),
+		(intersectionInfo.material->ambient.x + ((intersectionInfo.material->getDiffuse(intersectionInfo.tex_coord).x * normalLigthScalarProduct) + pow(intersectionInfo.material->getSpecular(intersectionInfo.tex_coord).x * (-intersectionInfo.viewToIntersectionVector).DotProduct(lr), intersectionInfo.material->shininess))),
+		(intersectionInfo.material->ambient.y + ((intersectionInfo.material->getDiffuse(intersectionInfo.tex_coord).y * normalLigthScalarProduct) + pow(intersectionInfo.material->getSpecular(intersectionInfo.tex_coord).y * (-intersectionInfo.viewToIntersectionVector).DotProduct(lr), intersectionInfo.material->shininess))),
+		(intersectionInfo.material->ambient.z + ((intersectionInfo.material->getDiffuse(intersectionInfo.tex_coord).z * normalLigthScalarProduct) + pow(intersectionInfo.material->getSpecular(intersectionInfo.tex_coord).z * (-intersectionInfo.viewToIntersectionVector).DotProduct(lr), intersectionInfo.material->shininess))),
 		1 } + applyShaderInternal(reflectedRay, t, ++depth, NULL) * intersectionInfo.material->reflectivity;// *Color4f{ intersectionInfo.material->diffuse.x, intersectionInfo.material->diffuse.y, intersectionInfo.material->diffuse.z, 1 };
 	return resultColor;
 }
@@ -403,7 +402,6 @@ Color4f Raytracer::get_pixel(const int x, const int y, const float t)
 
 int Raytracer::Ui()
 {
-	static float f = 0.0f;
 	static int counter = 0;
 
 	// we use a Begin/End pair to created a named window
@@ -417,7 +415,7 @@ int Raytracer::Ui()
 	//ImGui::Checkbox( "Demo Window", &show_demo_window );      // Edit bools storing our window open/close state
 	//ImGui::Checkbox( "Another Window", &show_another_window );
 
-	ImGui::SliderFloat( "float", &f, 0.0f, 1.0f );            // Edit 1 float using a slider from 0.0f to 1.0f    
+	ImGui::SliderFloat( "gamma", &gamma, 0.1f, 4.0f );            // Edit 1 float using a slider from 0.0f to 1.0f    
 	//ImGui::ColorEdit3( "clear color", ( float* )&clear_color ); // Edit 3 floats representing a color
 
 	if ( ImGui::Button( "Button" ) )                            // Buttons return true when clicked (most widgets return true when edited/activated)

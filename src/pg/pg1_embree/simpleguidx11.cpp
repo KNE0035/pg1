@@ -5,7 +5,8 @@ SimpleGuiDX11::SimpleGuiDX11( const int width, const int height)
 {
 	width_ = width;
 	height_ = height;
-
+	lastGamma = 1.0f;
+	gamma = 1.0f;
 	Init();
 }
 
@@ -46,6 +47,7 @@ int SimpleGuiDX11::Init()
 	//ImGui::StyleColorsClassic();
 
 	tex_data_ = new float[width_ * height_ * 4 * sizeof( float )];	
+	raw_tex_data_ = new float[width_ * height_ * 4 * sizeof(float)];
 	CreateTexture();
 
 	return 0;
@@ -56,7 +58,9 @@ SimpleGuiDX11::~SimpleGuiDX11()
 	Cleanup();
 	 
 	delete[] tex_data_;
+	delete[] raw_tex_data_;
 	tex_data_ = nullptr;
+	raw_tex_data_ = nullptr;
 }
 
 int SimpleGuiDX11::Cleanup()
@@ -121,11 +125,34 @@ void SimpleGuiDX11::Producer()
 		// write rendering results
 		{
 			std::lock_guard<std::mutex> lock( tex_data_lock_ );
-			memcpy( tex_data_, local_data, width_ * height_ * 4 * sizeof( float ) );			
+			memcpy(tex_data_, local_data, width_ * height_ * 4 * sizeof( float ) );	
+			memcpy(raw_tex_data_, local_data, width_ * height_ * 4 * sizeof(float));
 		} // lock release
+		lastGamma = -1.0f;
+		applyGamma(gamma);
 	}
-
 	delete[] local_data;
+}
+
+void SimpleGuiDX11::applyGamma(float gamma) {
+	if (lastGamma == gamma) return;
+	
+	lastGamma = gamma;
+	{
+		std::lock_guard<std::mutex> lock(tex_data_lock_);
+		
+		for (int y = 0; y < height_; ++y)
+		{
+			for (int x = 0; x < width_; ++x)
+			{
+				const int offset = (y * width_ + x) * 4;
+
+				tex_data_[offset] = pow(raw_tex_data_[offset], gamma);
+				tex_data_[offset + 1] = pow(raw_tex_data_[offset + 1], gamma);
+				tex_data_[offset + 2] = pow(raw_tex_data_[offset + 2], gamma);
+			}
+		}
+	}
 }
 
 int SimpleGuiDX11::width() const

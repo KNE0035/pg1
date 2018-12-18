@@ -185,10 +185,10 @@ int tutorial_3( const std::string file_name, const char * config )
 
 
 	//avenger
-	//Raytracer raytracer(640, 480, deg2rad(45.0), Vector3(175, -140, 130), Vector3(0, 0, 35), config);
+	Raytracer raytracer(640, 480, deg2rad(45.0), Vector3(175, -140, 130), Vector3(0, 0, 35), config);
 
 	//cornell_box
-	Raytracer raytracer( 320, 240, deg2rad( 45.0 ), Vector3(40, -940, 250), Vector3(0, 0, 250), config );
+	//Raytracer raytracer( 320, 240, deg2rad( 45.0 ), Vector3(40, -940, 250), Vector3(0, 0, 250), config );
 
 	//geosphere
 	//Raytracer raytracer( 640, 480, deg2rad( 45.0 ), Vector3(0, -4, 0), Vector3(0, 0, 0), config );

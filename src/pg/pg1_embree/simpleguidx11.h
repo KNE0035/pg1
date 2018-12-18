@@ -36,7 +36,10 @@ protected:
 	int height() const;
 
 	bool vsync_{ true };
+	void applyGamma(float gamma);
 
+	float gamma;
+	float lastGamma;
 private:
 	WNDCLASSEX wc_;
 	HWND hwnd_;
@@ -50,6 +53,7 @@ private:
 	ID3D11ShaderResourceView * tex_view_{ nullptr };
 	int width_{ 640 };
 	int height_{ 480 };
+	float * raw_tex_data_{ nullptr };
 	float * tex_data_{ nullptr }; // DXGI_FORMAT_R32G32B32A32_FLOAT
 	std::mutex tex_data_lock_;
 
