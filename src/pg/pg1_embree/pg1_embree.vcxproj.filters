@@ -25,6 +25,12 @@
     <Filter Include="Source Files\math">
       <UniqueIdentifier>{a8f742ee-3c0c-4131-824e-3528d55f091f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\optix">
+      <UniqueIdentifier>{3ee910fb-5be0-468e-8627-66c1ccc22851}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\optix">
+      <UniqueIdentifier>{2e600df4-d16e-4d8f-991e-1360c157182b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -108,6 +114,9 @@
     <ClInclude Include="CubeMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="optixtutorial.cuh">
+      <Filter>Header Files\optix</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -179,5 +188,13 @@
     <ClCompile Include="CubeMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tutorial_7.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="optixtutorial.cu">
+      <Filter>Source Files\optix</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>
